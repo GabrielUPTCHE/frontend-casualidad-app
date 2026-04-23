@@ -1,1 +1,59 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  height: 100%;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.editorial-shadow {
+    box-shadow: 0px 12px 32px rgba(45, 47, 47, 0.06);
+}
+
+.primary-gradient {
+    background: linear-gradient(135deg, #974300 0%, #fd8e4a 100%);
+}
+
+.primary-gradient-disabled {
+    background: linear-gradient(135deg, #c9c9c9 0%, #e0e0e0 100%);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.modal-fade-in {
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Animación de rotación para el icono de ayuda */
+.help-btn-icon {
+    transition: transform 0.3s ease;
+}
+
+.help-btn:hover .help-btn-icon {
+    transform: rotate(12deg);
+}
+
+.shake-animation {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
