@@ -12,8 +12,8 @@ import { LoginResponseDTO } from '../core/models/auth.dto';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],

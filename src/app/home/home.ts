@@ -13,7 +13,7 @@ import { DashboardDTO } from '../core/models/dashboard.dto';
 export class HomeComponent implements OnInit, AfterViewInit {
   @ViewChild('casualChart') chartCanvas!: ElementRef<HTMLCanvasElement>;
   
-  private platformId = inject(PLATFORM_ID);
+  private readonly platformId = inject(PLATFORM_ID);
   chartInstance: Chart | undefined;
 
   dashboardData: DashboardDTO = {
@@ -31,9 +31,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     Chart.register(...registerables);
   }
 
-  ngOnInit(): void {
-    // Empty state initialized
-  }
+
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId) && this.chartCanvas) {

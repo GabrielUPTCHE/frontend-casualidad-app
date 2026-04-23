@@ -72,7 +72,7 @@ export class PagosComponent implements OnInit {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(p => 
         p.id.toLowerCase().includes(term) ||
-        (p.clientName && p.clientName.toLowerCase().includes(term)) ||
+        p.clientName?.toLowerCase().includes(term) ||
         p.orderId.toLowerCase().includes(term)
       );
     }

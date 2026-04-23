@@ -147,7 +147,7 @@
 <!-- View Payment Modal -->
 @if (showViewModal && selectedPayment) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-on-background/20 backdrop-blur-sm">
-        <div class="absolute inset-0" (click)="closeViewModal()"></div>
+        <div class="absolute inset-0" tabindex="0" (click)="closeViewModal()" (keydown.enter)="closeViewModal()"></div>
         <div class="relative w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-[0px_24px_48px_rgba(45,47,47,0.12)] overflow-hidden flex flex-col animate-[dropdownFadeIn_0.2s_ease-out]">
             <!-- Modal Header -->
             <div class="px-8 pt-8 pb-4 flex justify-between items-start">
@@ -164,27 +164,27 @@
                 <!-- Left Column: Details -->
                 <div class="space-y-6">
                     <div class="space-y-1">
-                        <label class="text-xs uppercase tracking-widest text-outline font-bold">Fecha y hora</label>
+                        <p class="text-xs uppercase tracking-widest text-outline font-bold">Fecha y hora</p>
                         <p class="text-on-surface font-semibold flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-xl">calendar_today</span>
                             <span>{{ selectedPayment.createdAt | date:'medium' }}</span>
                         </p>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs uppercase tracking-widest text-outline font-bold">Monto del Pago</label>
+                        <p class="text-xs uppercase tracking-widest text-outline font-bold">Monto del Pago</p>
                         <div class="text-4xl font-headline font-extrabold text-primary-dim tracking-tighter">
                             <span>{{ selectedPayment.amount | currency:'USD' }}</span>
                         </div>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs uppercase tracking-widest text-outline font-bold">Tipo de pago</label>
+                        <p class="text-xs uppercase tracking-widest text-outline font-bold">Tipo de pago</p>
                         <p class="text-on-surface font-semibold flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-xl">{{ typeMap[selectedPayment.type].icon }}</span>
                             <span>{{ typeMap[selectedPayment.type].text }}</span>
                         </p>
                     </div>
                     <div class="space-y-1">
-                        <label class="text-xs uppercase tracking-widest text-outline font-bold">Usuario responsable</label>
+                        <p class="text-xs uppercase tracking-widest text-outline font-bold">Usuario responsable</p>
                         <div class="flex items-center gap-3 mt-2 bg-surface-container-low p-3 rounded-xl">                            
                             <div>
                                 <p class="text-sm font-bold text-on-surface leading-none">{{ selectedPayment.registeredBy.name }}</p>
@@ -195,7 +195,7 @@
                 </div>
                 <!-- Right Column: Receipt Image -->
                 <div class="space-y-4">
-                    <label class="text-xs uppercase tracking-widest text-outline font-bold">Comprobante</label>
+                    <p class="text-xs uppercase tracking-widest text-outline font-bold">Comprobante</p>
                     <div class="group relative rounded-xl overflow-hidden aspect-[3/4] bg-surface-container-high cursor-pointer ring-offset-4 focus-within:ring-2 focus-within:ring-primary">
                         @if (selectedPayment.voucherUrl) {
                             <img alt="Comprobante de pago" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" [src]="selectedPayment.voucherUrl" />
@@ -229,7 +229,7 @@
 <!-- Delete Payment Confirmation Modal -->
 @if (showDeleteModal && selectedPayment) {
     <div class="fixed inset-0 z-[110] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" (click)="closeDeleteModal()"></div>
+        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" tabindex="0" (click)="closeDeleteModal()" (keydown.enter)="closeDeleteModal()"></div>
         <div class="relative bg-surface-container-lowest w-full max-w-md rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden animate-[dropdownFadeIn_0.2s_ease-out]">
             <div class="h-2 w-full bg-gradient-to-r from-error to-error-container"></div>
             <div class="p-8 text-center">
@@ -260,7 +260,7 @@
 <!-- Success Delete Modal -->
 @if (showSuccessModal) {
     <div class="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-on-background/40 backdrop-blur-sm" (click)="closeSuccessModal()"></div>
+        <div class="absolute inset-0 bg-on-background/40 backdrop-blur-sm" tabindex="0" (click)="closeSuccessModal()" (keydown.enter)="closeSuccessModal()"></div>
         <div class="relative bg-surface-container-lowest w-full max-w-md rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden animate-[dropdownFadeIn_0.2s_ease-out]">
             <div class="h-2 w-full bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
             <div class="p-8 text-center">
