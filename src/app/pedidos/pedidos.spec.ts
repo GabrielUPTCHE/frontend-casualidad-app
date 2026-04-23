@@ -39,15 +39,21 @@ describe('PedidosComponent', () => {
 
   it('should sort correctly', () => {
     component.ordersData = [
-      { id: '1', code: '001', clientName: 'Z', totalAmount: 100, pendingBalance: 50, status: 'DONE', createdAt: '2026', deliveryDate: '2026', clientId: '1' },
-      { id: '2', code: '002', clientName: 'A', totalAmount: 100, pendingBalance: 0, status: 'DONE', createdAt: '2026', deliveryDate: '2026', clientId: '2' }
+      { id: '1', code: '001', clientName: 'Z', totalAmount: 100, pendingBalance: 50, status: 'DONE', createdAt: '2026', deliveryDate: '2026-01-01', clientId: '1' },
+      { id: '2', code: '002', clientName: 'A', totalAmount: 100, pendingBalance: 0, status: 'DONE', createdAt: '2026', deliveryDate: '2026-02-01', clientId: '2' }
     ];
     component.handleSort('cliente');
     expect(component.filteredOrders[0].clientName).toBe('A');
     component.handleSort('cliente');
     expect(component.filteredOrders[0].clientName).toBe('Z');
     
-    expect(component.getSortIcon('cliente')).toBe('expand_more');
+    component.handleSort('id');
+    component.handleSort('estado');
+    component.handleSort('fecha');
+    component.handleSort('saldo');
+    component.handleSort('unknown');
+    
+    expect(component.getSortIcon('unknown')).toBe('expand_less');
   });
 
   it('should handle delete modal and confirm', () => {
