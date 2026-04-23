@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, PLATFORM_ID, inject, OnInit } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { DashboardDTO } from '../core/models/dashboard.dto';
@@ -10,7 +10,7 @@ import { DashboardDTO } from '../core/models/dashboard.dto';
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
-export class HomeComponent implements OnInit, AfterViewInit {
+export class HomeComponent implements AfterViewInit {
   @ViewChild('casualChart') chartCanvas!: ElementRef<HTMLCanvasElement>;
   
   private readonly platformId = inject(PLATFORM_ID);
