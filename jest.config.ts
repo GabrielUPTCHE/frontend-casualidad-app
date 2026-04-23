@@ -11,15 +11,12 @@ const config: Config = {
   setupFilesAfterEnv: ['<rootDir>/setup-jest.ts'],
   testEnvironment: 'jsdom',
   extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
+  transform: {
+    '^.+\\.(ts|html|mjs)$': ['ts-jest', {
       tsconfig: '<rootDir>/tsconfig.spec.json',
       stringifyContentPathRegex: '\\.(html|css|scss|svg)$',
       useESM: true,
-    },
-  },
-  transform: {
-    '^.+\\.(ts|html|mjs)$': 'ts-jest',
+    }],
   },
   moduleFileExtensions: ['ts', 'mjs', 'js', 'html', 'json'],
   moduleNameMapper: {

@@ -1,0 +1,216 @@
+<div class="p-10 space-y-10 animate-[dropdownFadeIn_0.3s_ease-out]">
+    <!-- Hero Title & Context -->
+    <div class="flex flex-col md:flex-row justify-between items-end gap-6">
+        <div class="max-w-2xl">
+            <span class="text-orange-700 font-bold tracking-[0.2em] text-xs uppercase mb-2 block">Directorio Maestro</span>
+            <h2 class="text-4xl font-extrabold text-on-background tracking-tighter mb-4">Gestión de Clientes</h2>
+            <p class="text-on-surface-variant text-lg leading-relaxed">
+                Administra tu red de distribución y clientes finales con precisión editorial. Visualiza
+                perfiles, históricos de compras y segmentación de mercado desde un solo panel centralizado.
+            </p>
+        </div>                
+    </div>
+    
+    <!-- Bento Grid: Quick Access Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Add Client Card -->
+        <button class="md:col-span-4 group relative overflow-hidden bg-white rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] flex flex-col p-8 transition-all hover:-translate-y-1">
+            <div class="w-14 h-14 bg-primary rounded-lg flex items-center justify-center text-on-primary mb-6 shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-3xl" style='font-variation-settings: "FILL" 1;'>person_add</span>
+            </div>
+            <h3 class="text-2xl font-bold text-on-background mb-2">Añadir Cliente</h3>
+            <p class="text-on-surface-variant text-sm mb-6">Registra nuevos distribuidores y entidades en el sistema.</p>
+            <div class="mt-auto flex items-center gap-2 text-primary font-bold text-sm">
+                <span>Comenzar registro</span>
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </div>
+            <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-container/10 rounded-full blur-3xl group-hover:bg-primary-container/20 transition-colors"></div>
+        </button>
+    </div>
+    
+    <!-- Recent Clients Table Section -->
+    <div class="bg-white rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden">
+        <div class="px-8 py-6 border-b border-stone-100 flex justify-between items-center bg-stone-50/30">
+            <div>
+                <h3 class="text-xl font-bold text-on-background">Clientes Recientes</h3>
+                <p class="text-sm text-on-surface-variant">Clientes en el sistema.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm">search</span>
+                    <input [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
+                        class="bg-stone-100 border-none rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:ring-2 focus:ring-orange-600/40 focus:bg-white transition-all"
+                        placeholder="Buscar por nombre o ID..." type="text" />
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-xs font-bold text-on-surface-variant uppercase tracking-widest bg-stone-50/50">
+                        <th class="px-8 py-5">Nombre del Cliente</th>
+                        <th class="px-8 py-5">Pedidos</th>
+                        <th class="px-8 py-5">Estado</th>
+                        <th class="px-8 py-5 text-right">Acciones</th>
+                     </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    @for (client of paginatedClients; track client.id) {
+                        <tr class="hover:bg-stone-50/50 transition-colors group">
+                            <td class="px-8 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div>
+                                        <p class="text-sm font-bold text-on-background group-hover:text-primary transition-colors">{{ client.name }}</p>
+                                        <p class="text-xs text-on-surface-variant">ID: {{ client.id }}</p>
+                                    </div>
+                                </div>
+                             </td>
+                            <td class="px-8 py-4">
+                                <button (click)="openProductsModal(client)"
+                                    class="px-3 py-1 bg-secondary-container/30 text-on-secondary-container text-xs font-bold rounded-full hover:bg-secondary-container transition-colors flex items-center">
+                                    {{ client.ordersSummary.total }} items
+                                    <span class="material-symbols-outlined text-[14px] ml-1">open_in_new</span>
+                                </button>
+                             </td>
+                            <td class="px-8 py-4">
+                                @if (client.ordersSummary.pending > 0) {
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-red-700">
+                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>Pendiente
+                                    </div>
+                                } @else {
+                                    <div class="flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>Al día
+                                    </div>
+                                }
+                             </td>
+                            <td class="px-8 py-4 text-right">
+                                <button class="p-2 text-zinc-400 hover:text-primary transition-colors" title="Ver detalles">
+                                    <span class="material-symbols-outlined text-xl">visibility</span>
+                                </button>
+                                <button class="p-2 text-zinc-400 hover:text-secondary transition-colors" title="Editar">
+                                    <span class="material-symbols-outlined text-xl">edit</span>
+                                </button>
+                                <button (click)="openDeleteModal(client)" 
+                                    [disabled]="client.ordersSummary.total > 0"
+                                    [title]="client.ordersSummary.total > 0 ? 'No se puede eliminar (Tiene pedidos)' : 'Eliminar'"
+                                    class="p-2 transition-colors"
+                                    [ngClass]="client.ordersSummary.total > 0 ? 'text-zinc-300 cursor-not-allowed' : 'text-zinc-400 hover:text-error'">
+                                    <span class="material-symbols-outlined text-xl">delete</span>
+                                </button>
+                             </td>
+                         </tr>
+                    }
+                    @if (paginatedClients.length === 0) {
+                        <tr>
+                            <td colspan="4" class="px-8 py-10 text-center text-on-surface-variant">
+                                No se encontraron clientes con ese criterio de búsqueda.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+             </table>
+        </div>
+        
+        <!-- Shared Pagination Component -->
+        <app-pagination 
+            [totalItems]="filteredClients.length" 
+            [pageSize]="pageSize" 
+            [currentPage]="currentPage"
+            itemName="clientes registrados"
+            (pageChange)="onPageChange($event)">
+        </app-pagination>
+    </div>
+</div>
+
+<!-- Products Modal Overlay -->
+@if (showProductsModal && selectedClient) {
+    <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm" (click)="closeProductsModal()" (keydown.enter)="closeProductsModal()"></div>
+        <!-- Modal Window -->
+        <div class="relative bg-surface-container-lowest w-full max-w-4xl rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden flex flex-col max-h-[85vh] animate-[dropdownFadeIn_0.2s_ease-out]">
+            <!-- Modal Header -->
+            <div class="px-8 py-6 border-b border-outline-variant/15 flex justify-between items-center bg-surface-container-lowest">
+                <div>
+                    <h2 class="text-2xl font-headline font-extrabold text-on-background tracking-tight">Pedidos de {{ selectedClient.name }}</h2>
+                    <p class="text-primary font-bold text-sm mt-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">tag</span> Cliente ID: {{ selectedClient.id }}
+                    </p>
+                </div>
+                <button (click)="closeProductsModal()" class="text-on-surface-variant hover:text-on-surface transition-colors p-2 hover:bg-surface-container rounded-full">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-8">
+                <!-- Dynamic content -->
+                @if (selectedClient.ordersSummary.total === 0) {
+                    <div class="text-center py-8 text-on-surface-variant">
+                        Este cliente no tiene pedidos registrados.
+                    </div>
+                } @else {
+                    <div class="text-center py-8">
+                        <div class="animate-pulse">Cargando detalles de los {{ selectedClient.ordersSummary.total }} pedidos...</div>
+                    </div>
+                }
+            </div>
+            <!-- Modal Footer -->
+            <div class="px-8 py-6 bg-surface-container border-t border-outline-variant/15 flex justify-end gap-4">
+                <button (click)="closeProductsModal()" class="px-8 py-3 rounded-lg font-bold bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-sm transition-transform active:scale-95">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Client Confirmation Modal -->
+@if (showDeleteModal && selectedClient) {
+    <div class="fixed inset-0 z-[90] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" (click)="closeDeleteModal()" (keydown.enter)="closeDeleteModal()"></div>
+        <!-- Modal Container -->
+        <div class="relative bg-surface-container-lowest w-full max-w-md rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden animate-[dropdownFadeIn_0.2s_ease-out]">
+            <!-- Top Accent Glow - Red for danger -->
+            <div class="h-2 w-full bg-gradient-to-r from-error to-error-container"></div>
+            <div class="p-8 text-center">
+                <!-- Warning Icon -->
+                <div class="relative mb-6 flex justify-center">
+                    <div class="absolute inset-0 bg-error/10 rounded-full scale-150 blur-xl"></div>
+                    <div class="relative w-20 h-20 bg-gradient-to-br from-error to-error-container rounded-full flex items-center justify-center shadow-lg">
+                        <span class="material-symbols-outlined text-white text-4xl" style="font-variation-settings: 'wght' 600;">person_remove</span>
+                    </div>
+                </div>
+
+                <!-- Text Content -->
+                <h2 class="text-2xl font-extrabold text-on-surface tracking-tight mb-3 font-headline">
+                    ¿Eliminar cliente?
+                </h2>
+                <p class="text-on-surface-variant text-base leading-relaxed font-body mb-4">
+                    Estás a punto de eliminar a <span class="text-error font-bold">{{ selectedClient.name }}</span>.
+                </p>
+                <p class="text-on-surface-variant text-sm leading-relaxed font-body">
+                    Esta acción <span class="text-error font-bold">no se puede deshacer</span>. El cliente será
+                    eliminado permanentemente del sistema junto con todos sus pedidos y datos asociados.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="mt-8 flex flex-col gap-3">
+                    <!-- Confirm Delete Button -->
+                    <button (click)="confirmDelete()"
+                        class="group relative flex items-center justify-center gap-2 w-full py-3.5 px-6 bg-gradient-to-br from-error to-error-container text-white font-bold rounded-lg shadow-sm active:scale-[0.98] transition-all overflow-hidden">
+                        <span class="relative z-10">Sí, eliminar cliente</span>
+                        <span class="material-symbols-outlined relative z-10 text-xl group-hover:translate-x-1 transition-transform">delete_forever</span>
+                    </button>
+
+                    <!-- Cancel Button -->
+                    <button (click)="closeDeleteModal()"
+                        class="w-full py-3.5 px-6 bg-surface-container text-on-surface font-bold rounded-lg hover:bg-surface-container-high active:scale-[0.98] transition-all">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

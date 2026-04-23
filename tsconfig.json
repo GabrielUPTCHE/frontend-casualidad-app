@@ -14,7 +14,7 @@
     "target": "ES2022",
     "module": "preserve",
      "useDefineForClassFields": false,
-    "emitDecoratorMetadata": true,
+
     "experimentalDecorators": true
   },
   "angularCompilerOptions": {
