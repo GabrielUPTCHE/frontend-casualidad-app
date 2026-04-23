@@ -1,0 +1,28 @@
+<div class="p-8 bg-surface-container-low/30 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <p class="text-xs font-bold text-on-surface-variant">
+        Mostrando {{ displayedItems }} de {{ totalItems }} {{ itemName }}
+    </p>
+    <div class="flex gap-2 flex-wrap justify-center">
+        <button (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+            [ngClass]="currentPage === 1 ? 'bg-surface-container-low text-outline/50 cursor-not-allowed' : 'bg-surface-container-lowest border border-outline-variant/15 hover:bg-primary hover:text-on-primary'">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+        </button>
+        
+        @for (page of pages; track page) {
+            <button (click)="onPageChange(page)"
+                class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all"
+                [ngClass]="page === currentPage ? 'bg-primary text-on-primary shadow-sm' : 'bg-surface-container-lowest border border-outline-variant/15 hover:bg-primary hover:text-on-primary'">
+                {{ page }}
+            </button>
+        }
+
+        <button (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+            [ngClass]="currentPage === totalPages ? 'bg-surface-container-low text-outline/50 cursor-not-allowed' : 'bg-surface-container-lowest border border-outline-variant/15 hover:bg-primary hover:text-on-primary'">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </button>
+    </div>
+</div>
