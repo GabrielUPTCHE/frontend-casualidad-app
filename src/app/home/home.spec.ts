@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { HomeComponent } from './home';
 
 describe('HomeComponent', () => {
@@ -17,6 +16,11 @@ describe('HomeComponent', () => {
   });
 
   it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should initialize empty chart logic without errors', () => {
+    component.ngAfterViewInit(); // This tests branch for chart loading
     expect(component).toBeTruthy();
   });
 });
