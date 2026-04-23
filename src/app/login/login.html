@@ -142,7 +142,7 @@
 <!-- Modal de ayuda -->
 @if (showHelpModal) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" tabindex="0" (click)="toggleHelpModal()" (keydown.enter)="toggleHelpModal()"></div>
+        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" tabindex="0" role="button" (click)="toggleHelpModal()" (keydown.enter)="toggleHelpModal()"></div>
         <div class="relative bg-surface-container-lowest w-full max-w-md rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden modal-fade-in">
             <div class="h-2 w-full bg-gradient-to-r from-primary to-primary-container"></div>
             <div class="p-8 text-center">
@@ -177,7 +177,7 @@
 <!-- Modal de error de credenciales -->
 @if (showErrorModal) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" tabindex="0" (click)="closeErrorModal()" (keydown.enter)="closeErrorModal()"></div>
+        <div class="absolute inset-0 bg-inverse-surface/60 backdrop-blur-sm" tabindex="0" role="button" (click)="closeErrorModal()" (keydown.enter)="closeErrorModal()"></div>
         <div class="relative bg-surface-container-lowest w-full max-w-md rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden modal-fade-in">
             <div class="h-2 w-full bg-gradient-to-r from-error to-error-container"></div>
             <div class="p-8 text-center">

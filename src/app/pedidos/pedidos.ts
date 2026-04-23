@@ -73,7 +73,7 @@ export class PedidosComponent implements OnInit {
     if (this.searchTerm.trim() !== '') {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(o => 
-        (o.code && o.code.toLowerCase().includes(term)) ||
+        o.code?.toLowerCase().includes(term) ||
         o.id.toLowerCase().includes(term) ||
         o.clientName.toLowerCase().includes(term)
       );
