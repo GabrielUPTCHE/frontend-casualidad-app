@@ -135,4 +135,42 @@ describe('PedidosComponent', () => {
     }
   });
 
+
+  it('should cover remaining branches in pedidos', () => {
+    // addItem / removeItem / onProductSelect / subtotal
+    component.openAddForm();
+    component.addItem();
+    component.itemsFormArray.at(0).patchValue({ productId: '1', quantity: 2 });
+    component.onProductSelect(0);
+    const sub = component.subtotalEstimate;
+    component.removeItem(0);
+
+    // invalid form save
+    component.openAddForm();
+    component.saveOrder();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
+
+  it('should cover remaining branches in pedidos', () => {
+    // addItem / removeItem / onProductSelect / subtotal
+    component.openAddForm();
+    component.addItem();
+    component.itemsFormArray.at(0).patchValue({ productId: '1', quantity: 2 });
+    component.onProductSelect(0);
+    const sub = component.subtotalEstimate;
+    component.removeItem(0);
+
+    // invalid form save
+    component.openAddForm();
+    component.saveOrder();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
 });

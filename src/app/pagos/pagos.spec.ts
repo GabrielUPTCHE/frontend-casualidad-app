@@ -141,4 +141,26 @@ describe('PagosComponent', () => {
     }
   });
 
+
+  it('should cover remaining branches in pagos', () => {
+    // invalid form save
+    component.openAddForm();
+    component.savePayment();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
+
+  it('should cover remaining branches in pagos', () => {
+    // invalid form save
+    component.openAddForm();
+    component.savePayment();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
 });

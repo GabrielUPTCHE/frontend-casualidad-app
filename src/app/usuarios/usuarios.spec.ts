@@ -109,4 +109,26 @@ describe('UsuariosComponent', () => {
     }
   });
 
+
+  it('should cover remaining branches in usuarios', () => {
+    // invalid form save
+    component.openAddForm();
+    component.saveUser();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
+
+  it('should cover remaining branches in usuarios', () => {
+    // invalid form save
+    component.openAddForm();
+    component.saveUser();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
 });

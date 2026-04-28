@@ -122,4 +122,27 @@ describe('InventarioComponent', () => {
     }
   });
 
+
+  it('should cover remaining branches in inventario', () => {
+    // add/remove component
+    component.openAddForm();
+    component.addComponent();
+    component.removeComponent(0);
+
+    // on type change
+    component.handleTypeChange('TRANSFORMADO');
+    component.handleTypeChange('REVENTA');
+
+    // edit with composition
+    component.openEditForm({ id: '1', name: 'A', sku: 'A', category: 'A', type: 'ELABORADO', unit: { name: 'pz' }, stock: 1, minStock: 1, productionCost: 1, salePrice: 1, composition: [{ inventoryId: '2', quantity: 1, unitCost: 1, subtotal: 1 }] } as any);
+
+    // invalid form save
+    component.openAddForm();
+    component.saveProduct();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
 });

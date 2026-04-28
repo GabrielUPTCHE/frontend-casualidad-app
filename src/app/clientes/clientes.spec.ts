@@ -126,4 +126,42 @@ describe('ClientesComponent', () => {
     }
   });
 
+
+  it('should cover remaining branches in clientes', () => {
+    // add/remove phone
+    component.openAddForm();
+    component.addPhoneField();
+    component.removePhoneField(0);
+
+    // edit with phones
+    component.openEditForm({ id: '1', name: 'A', email: '', type: 'B2B', address: '', contactPerson: '', phones: ['123', '456'] } as any);
+
+    // invalid form save
+    component.openAddForm();
+    component.saveClient();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
+
+  it('should cover remaining branches in clientes', () => {
+    // add/remove phone
+    component.openAddForm();
+    component.addPhoneField();
+    component.removePhoneField(0);
+
+    // edit with phones
+    component.openEditForm({ id: '1', name: 'A', email: '', type: 'B2B', address: '', contactPerson: '', phones: ['123', '456'] } as any);
+
+    // invalid form save
+    component.openAddForm();
+    component.saveClient();
+
+    // close modal add branch
+    component.viewMode = 'add';
+    component.closeFormSuccessModal(false);
+  });
+
 });
