@@ -1,3 +1,4 @@
+@if (viewMode === 'list') {
 <div class="p-10 space-y-10 animate-[dropdownFadeIn_0.3s_ease-out]">
     <!-- Hero Title & Context -->
     <div class="flex flex-col md:flex-row justify-between items-end gap-6">
@@ -14,7 +15,7 @@
     <!-- Bento Grid: Quick Access Cards -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
         <!-- Add Client Card -->
-        <button class="md:col-span-4 group relative overflow-hidden bg-white rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] flex flex-col p-8 transition-all hover:-translate-y-1">
+        <button (click)="openAddForm()" class="md:col-span-4 group relative overflow-hidden bg-white rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] flex flex-col p-8 transition-all hover:-translate-y-1">
             <div class="w-14 h-14 bg-primary rounded-lg flex items-center justify-center text-on-primary mb-6 shadow-lg shadow-primary/20">
                 <span class="material-symbols-outlined text-3xl" style='font-variation-settings: "FILL" 1;'>person_add</span>
             </div>
@@ -49,9 +50,15 @@
             <table class="w-full text-left">
                 <thead>
                     <tr class="text-xs font-bold text-on-surface-variant uppercase tracking-widest bg-stone-50/50">
-                        <th class="px-8 py-5">Nombre del Cliente</th>
+                        <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-8 py-5 group" (click)="handleSort('name')">
+                            Nombre del Cliente
+                            <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'name' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('name') }}</span>
+                        </th>
                         <th class="px-8 py-5">Pedidos</th>
-                        <th class="px-8 py-5">Estado</th>
+                        <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-8 py-5 group" (click)="handleSort('isActive')">
+                            Estado
+                            <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'isActive' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('isActive') }}</span>
+                        </th>
                         <th class="px-8 py-5 text-right">Acciones</th>
                      </tr>
                 </thead>
@@ -88,7 +95,7 @@
                                 <button class="p-2 text-zinc-400 hover:text-primary transition-colors" title="Ver detalles">
                                     <span class="material-symbols-outlined text-xl">visibility</span>
                                 </button>
-                                <button class="p-2 text-zinc-400 hover:text-secondary transition-colors" title="Editar">
+                                <button (click)="openEditForm(client)" class="p-2 text-zinc-400 hover:text-secondary transition-colors" title="Editar">
                                     <span class="material-symbols-outlined text-xl">edit</span>
                                 </button>
                                 <button (click)="openDeleteModal(client)" 
@@ -122,6 +129,113 @@
         </app-pagination>
     </div>
 </div>
+}
+
+@if (viewMode === 'add' || viewMode === 'edit') {
+<section class="p-10 max-w-5xl mx-auto w-full animate-[dropdownFadeIn_0.2s_ease-out]">
+    <nav class="flex gap-2 text-xs font-bold tracking-widest text-orange-700 mb-4">
+        <button type="button" class="opacity-50 hover:opacity-100 transition-opacity" (click)="closeForm()">CLIENTES</button>
+        <span class="opacity-50">/</span>
+        <span>{{ viewMode === 'add' ? 'AÑADIR' : 'EDITAR' }} CLIENTE</span>
+    </nav>
+    <div class="mb-10 text-center md:text-left">
+        <h2 class="text-4xl font-extrabold text-on-surface tracking-tight font-headline mb-3">
+            {{ viewMode === 'add' ? 'Nuevo registro de Cliente' : 'Editar Cliente' }}
+        </h2>
+        <p class="text-lg text-neutral-500 max-w-2xl font-body">
+            {{ viewMode === 'add' 
+               ? 'Complete la información básica para dar de alta a un nuevo cliente en el sistema.' 
+               : 'Modifique los datos del cliente. Los cambios se sincronizarán al instante.' }}
+        </p>
+    </div>
+    
+    <div class="bg-white rounded-[2rem] p-8 md:p-12 shadow-[0px_12px_32px_rgba(45,47,47,0.06)] border border-white">
+        <form [formGroup]="clientForm" (ngSubmit)="saveClient()" class="space-y-10">
+            <!-- Section: Identity -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                <div class="md:col-span-4">
+                    <h3 class="text-xl font-bold text-orange-900 font-headline">Identidad</h3>
+                    <p class="text-sm text-neutral-400 mt-1">Información o nombre comercial.</p>
+                </div>
+                <div class="md:col-span-8">
+                    @if (viewMode === 'edit') {
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-on-surface mb-2">ID Cliente</label>
+                            <input formControlName="id" class="w-full bg-stone-100 border-none rounded-xl py-4 px-5 text-stone-600 cursor-not-allowed" type="text" readonly />
+                        </div>
+                    }
+
+                    <label class="block text-sm font-bold text-on-surface mb-2">
+                        Nombre Completo <span class="text-error">*</span>
+                    </label>
+                    <input formControlName="name" class="w-full bg-surface-container border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-primary/40 transition-all" placeholder="Ej. Juan Pérez" type="text" />
+                </div>
+            </div>
+            <div class="h-[1px] bg-neutral-100 w-full"></div>
+            
+            <!-- Section: Contact -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                <div class="md:col-span-4">
+                    <h3 class="text-xl font-bold text-orange-900 font-headline">Teléfono de Contacto</h3>
+                    <p class="text-sm text-neutral-400 mt-1">Añada los números de enlace disponibles.</p>
+                </div>
+                <div class="md:col-span-8 space-y-4" formArrayName="phones">
+                    <div class="space-y-3">
+                        @for (phoneCtrl of phonesFormArray.controls; track $index; let i = $index) {
+                            <div class="phone-field-group flex gap-3 items-start animate-[dropdownFadeIn_0.2s_ease-out]">
+                                <div class="flex-1 relative">
+                                    <label class="block text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1 px-1">
+                                        {{ i === 0 ? 'Teléfono Principal' : 'Teléfono Adicional' }} <span class="text-error" *ngIf="i === 0">*</span>
+                                    </label>
+                                    <div class="flex items-center bg-surface-container rounded-xl overflow-hidden">
+                                        <input [formControlName]="i" type="tel" class="phone-input flex-1 bg-transparent border-none py-4 px-3 text-on-surface placeholder:text-neutral-400 focus:ring-0" placeholder="55 0000 0000" />
+                                    </div>
+                                </div>
+                                <button type="button" (click)="removePhoneField(i)" [disabled]="phonesFormArray.length === 1" 
+                                    class="mt-7 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                                    [ngClass]="phonesFormArray.length === 1 ? 'bg-red-100 text-error opacity-30 cursor-not-allowed' : 'bg-red-100 text-error hover:bg-error hover:text-white'">
+                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    <button (click)="addPhoneField()" type="button" class="group flex items-center gap-2 text-primary font-bold text-sm hover:translate-x-1 transition-transform">
+                        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                        </div>
+                        Añadir otro teléfono
+                    </button>
+                </div>
+            </div>
+            <div class="h-[1px] bg-neutral-100 w-full"></div>
+            
+            <!-- Section: Location -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                <div class="md:col-span-4">
+                    <h3 class="text-xl font-bold text-orange-900 font-headline">Ubicación</h3>
+                    <p class="text-sm text-neutral-400 mt-1">Información de logística y fiscal (opcional).</p>
+                </div>
+                <div class="md:col-span-8">
+                    <label class="block text-sm font-bold text-on-surface mb-2">Dirección de Entrega/Facturación</label>
+                    <textarea formControlName="address" class="w-full bg-surface-container border-none rounded-xl py-4 px-5 text-on-surface placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-primary/40 transition-all" placeholder="Calle, número, colonia, código postal y referencias adicionales..." rows="4"></textarea>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-end gap-4 pt-10 border-t border-neutral-100">
+                <button (click)="closeForm()" type="button" class="px-8 py-4 rounded-xl text-neutral-600 font-bold hover:bg-neutral-100 transition-colors text-base">
+                    Cancelar
+                </button>
+                <button type="submit" [disabled]="!clientForm.valid" [class.opacity-50]="!clientForm.valid"
+                        class="px-10 py-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-white font-bold text-base shadow-[0px_8px_24px_rgba(151,67,0,0.25)] hover:scale-[1.02] active:scale-95 transition-all">
+                    {{ viewMode === 'add' ? 'Guardar Cliente' : 'Actualizar Cliente' }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+
+</section>
+}
 
 <!-- Products Modal Overlay -->
 @if (showProductsModal && selectedClient) {
@@ -210,6 +324,42 @@
                         Cancelar
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Form Success Modal -->
+@if (showFormSuccessModal) {
+    <div class="fixed inset-0 z-[90] flex items-center justify-center p-4">
+        <button class="absolute inset-0 bg-on-background/40 backdrop-blur-sm border-none w-full h-full cursor-default" (click)="closeFormSuccessModal(true)"></button>
+        <div class="relative bg-surface-container-lowest w-full max-w-lg rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden animate-[dropdownFadeIn_0.2s_ease-out]">
+            <div class="h-2 w-full bg-gradient-to-r from-primary to-primary-container"></div>
+            <div class="p-10 text-center">
+                <div class="relative mb-8 flex justify-center">
+                    <div class="absolute inset-0 bg-primary/10 rounded-full scale-150 blur-xl"></div>
+                    <div class="relative w-24 h-24 bg-gradient-to-br from-primary to-primary-container rounded-full flex items-center justify-center shadow-lg">
+                        <span class="material-symbols-outlined text-white text-5xl" style="font-variation-settings: 'wght' 600;">check_circle</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-extrabold text-on-surface tracking-tight mb-4 font-headline">
+                    {{ viewMode === 'add' ? 'Cliente Añadido con Éxito' : 'Cliente Actualizado' }}
+                </h2>
+                <p class="text-on-surface-variant text-lg leading-relaxed font-body px-4">
+                    {{ viewMode === 'add' ? 'El perfil para el nuevo cliente ha sido creado.' : 'Los datos han sido modificados correctamente.' }}
+                </p>
+                <div class="mt-10 flex flex-col gap-3">
+                    <button (click)="closeFormSuccessModal(true)" class="group relative flex items-center justify-center gap-2 w-full py-4 px-6 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-sm active:scale-[0.98] transition-all overflow-hidden">
+                        <span class="relative z-10">Ir al Listado</span>
+                        <span class="material-symbols-outlined relative z-10 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                    <button (click)="closeFormSuccessModal(false)" class="w-full py-4 px-6 bg-secondary-container/30 text-on-secondary-container font-bold rounded-lg hover:bg-secondary-container/50 active:scale-[0.98] transition-all">
+                        {{ viewMode === 'add' ? 'Añadir otro' : 'Seguir editando' }}
+                    </button>
+                </div>
+                <button (click)="closeFormSuccessModal(true)" class="mt-6 text-stone-400 hover:text-primary transition-colors text-sm font-medium tracking-wide">
+                    Cerrar ventana
+                </button>
             </div>
         </div>
     </div>

@@ -1,9 +1,26 @@
-import { ClientDTO } from './client.dto';
+import { OrderClientDTO } from './client.dto';
 
-export type OrderStatus = 'PENDING_ACCEPTANCE' | 'PENDING_PAYMENT' | 'IN_PRODUCTION' | 'DONE' | 'DELIVERED' | 'CANCELLED';
+export type OrderStatus = 'PENDING_ACCEPTANCE' | 'PENDING_PAYMENT' | 'EN_PRODUCCION' | 'IN_PRODUCTION' | 'DONE' | 'DELIVERED' | 'CANCELLED';
 export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID';
 
+export interface OrderProductDTO {
+  idDetalle: number;
+  nombreProducto: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
 export interface OrderSummaryDTO {
+  idPedido: number;
+  codigoUnico: string;
+  estadoPedido: OrderStatus;
+  fechaEntrega: string;
+  total: number | null;
+  saldoPendiente: number | null;
+  cliente: OrderClientDTO;
+  
+  // Legacy fields for UI compatibility
   id: string;
   code: string | null;
   clientName: string;
@@ -11,7 +28,7 @@ export interface OrderSummaryDTO {
   paymentStatus: PaymentStatus;
   totalAmount: number;
   pendingBalance: number;
-  deliveryDate: string; // ISO8601 date
+  deliveryDate: string;
 }
 
 export interface OrderItemDTO {
@@ -24,7 +41,9 @@ export interface OrderItemDTO {
 }
 
 export interface OrderDetailDTO extends OrderSummaryDTO {
-  client: ClientDTO;
-  items: OrderItemDTO[];
-  paymentsHistory: any[]; // Se definirá PaymentDTO a detalle después si es necesario
+  productos: OrderProductDTO[];
+  // Legacy fields
+  client?: any;
+  items?: OrderItemDTO[];
+  paymentsHistory?: any[];
 }

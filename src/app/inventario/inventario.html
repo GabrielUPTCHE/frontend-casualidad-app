@@ -1,3 +1,4 @@
+@if (viewMode === 'list') {
 <div class="p-10 max-w-7xl mx-auto space-y-10 animate-[dropdownFadeIn_0.3s_ease-out]">
     <!-- Hero Header Section -->
     <div class="flex justify-between items-end">
@@ -24,7 +25,7 @@
         </div>
 
         <!-- Add New Product Section -->
-        <button class="md:col-span-2 group relative flex flex-col items-start p-8 bg-surface-container-lowest rounded-xl text-left overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-[0px_10px_30px_rgba(42,52,57,0.06)] border border-stone-100 shadow-[0px_12px_32px_rgba(45,47,47,0.06)]">
+        <button (click)="openAddForm()" class="md:col-span-2 group relative flex flex-col items-start p-8 bg-surface-container-lowest rounded-xl text-left overflow-hidden transition-all duration-300 hover:translate-y-[-4px] hover:shadow-[0px_10px_30px_rgba(42,52,57,0.06)] border border-stone-100 shadow-[0px_12px_32px_rgba(45,47,47,0.06)]">
             <div class="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity pointer-events-none">
                 <span class="material-symbols-outlined text-[180px]" style='font-variation-settings: "wght" 200;'>add_box</span>
             </div>
@@ -59,11 +60,7 @@
     <section class="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden">
         <div class="px-8 py-6 flex justify-between items-center bg-surface-container-low/30 border-b border-stone-100">
             <div class="flex gap-6">
-                <button (click)="setFilter('all')" [ngClass]="currentFilter === 'all' ? 'text-primary font-bold border-b-2 border-primary pb-1' : 'text-on-surface-variant font-medium hover:text-primary transition-colors'" class="text-sm">Todos los artículos</button>
-                <button (click)="setFilter('lowstock')" [ngClass]="currentFilter === 'lowstock' ? 'text-primary font-bold border-b-2 border-primary pb-1' : 'text-on-surface-variant font-medium hover:text-primary transition-colors'" class="text-sm">Stock bajo</button>
-                <button (click)="setFilter('category')" [ngClass]="currentFilter === 'category' ? 'text-primary font-bold border-b-2 border-primary pb-1' : 'text-on-surface-variant font-medium hover:text-primary transition-colors'" class="text-sm flex items-center gap-1">
-                    Por categoría <span class="material-symbols-outlined text-[14px]">expand_more</span>
-                </button>
+                <h3 class="text-xl font-bold text-on-surface">Inventario</h3>
             </div>
             <div class="flex items-center gap-2">
                 <div class="relative hidden lg:block">
@@ -79,9 +76,18 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.15em] bg-stone-50/50">
-                        <th class="px-8 py-4">Artículo</th>
-                        <th class="px-6 py-4">Categoría</th>
-                        <th class="px-6 py-4">Stock</th>
+                        <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-8 py-4 group" (click)="handleSort('name')">
+                            Artículo
+                            <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'name' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('name') }}</span>
+                        </th>
+                        <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-6 py-4 group" (click)="handleSort('type')">
+                            Categoría
+                            <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'type' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('type') }}</span>
+                        </th>
+                        <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-6 py-4 group" (click)="handleSort('stock')">
+                            Stock
+                            <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'stock' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('stock') }}</span>
+                        </th>
                         <th class="px-6 py-4">Estado</th>
                         <th class="px-6 py-4">Precio (Compra)</th>
                         <th class="px-8 py-4 text-right">Acciones</th>
@@ -133,7 +139,7 @@
                             </td>
                             <td class="px-8 py-5 text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    <button class="material-symbols-outlined text-outline hover:text-primary transition-colors p-1 rounded-md hover:bg-surface-container" title="Editar">edit</button>
+                                    <button (click)="openEditForm(product)" class="material-symbols-outlined text-outline hover:text-primary transition-colors p-1 rounded-md hover:bg-surface-container" title="Editar">edit</button>
                                     <button (click)="openDeleteModal(product)" class="material-symbols-outlined text-error-dim hover:text-error transition-colors p-1 rounded-md hover:bg-error-container/10" title="Eliminar">delete</button>
                                 </div>
                             </td>
@@ -160,6 +166,194 @@
         </app-pagination>
     </section>
 </div>
+}
+
+@if (viewMode === 'add' || viewMode === 'edit') {
+<main class="p-10 max-w-5xl mx-auto w-full animate-[dropdownFadeIn_0.2s_ease-out]">
+    <nav class="flex gap-2 text-xs font-bold tracking-widest text-orange-700 mb-4">
+        <button type="button" class="opacity-50 hover:opacity-100 transition-opacity" (click)="closeForm()">INVENTARIO</button>
+        <span class="opacity-50">/</span>
+        <span>{{ viewMode === 'add' ? 'AGREGAR' : 'EDITAR' }} ARTÍCULO</span>
+    </nav>
+    <div class="mb-10">
+        <h1 class="text-5xl font-extrabold text-on-background tracking-tighter mb-2">{{ viewMode === 'add' ? 'Agregar Nuevo Artículo' : 'Editar Artículo' }}</h1>
+        <p class="text-stone-500 text-lg max-w-2xl">
+            {{ viewMode === 'add' ? 'Registra un nuevo artículo en tu inventario con todos sus detalles y componentes.' : 'Actualiza la información del artículo.' }}
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        <div class="md:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(45,47,47,0.06)]">
+            <form [formGroup]="inventoryForm" (ngSubmit)="saveProduct()" class="space-y-8">
+                <div class="space-y-2">
+                    <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Nombre del Artículo *</label>
+                    <input formControlName="name" class="w-full bg-surface-container border-none rounded-lg p-4 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all placeholder:text-stone-400 font-body" placeholder="Ej: Papel Bond 80g" type="text" />
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Cantidad Inicial (Stock) *</label>
+                    <input formControlName="stock" class="w-full bg-surface-container border-none rounded-lg p-4 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all placeholder:text-stone-400 font-body" type="number" step="any" />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Tipo de Artículo *</label>
+                        <select formControlName="type" class="w-full bg-surface-container border-none rounded-lg p-4 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest appearance-none transition-all font-body">
+                            <option value="" disabled>Selecciona un tipo...</option>
+                            <option value="INSUMO">Insumo</option>
+                            <option value="ELABORADO">Elaborado</option>
+                            <option value="TRANSFORMADO">Transformado</option>
+                            <option value="REVENTA">Reventa</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Unidad de Medida *</label>
+                        <input formControlName="unit" class="w-full bg-surface-container border-none rounded-lg p-4 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all placeholder:text-stone-400 font-body" placeholder="Ej: Resma, Kg, Unidad" type="text" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Stock mínimo</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">inventory</span>
+                            <input formControlName="minStock" class="w-full bg-surface-container border-none rounded-lg p-4 pl-12 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all font-body" placeholder="0" type="number" step="any" />
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Costo de producción *</label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-4 font-bold text-stone-500">$</span>
+                            <input formControlName="productionCost" type="number" step="0.01" class="w-full bg-surface-container border-none rounded-lg p-4 pl-8 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all font-body" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase" [ngClass]="inventoryForm.get('salePrice')?.disabled ? 'opacity-50' : ''">Precio de venta (Opcional)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-stone-500"></span>
+                            <input formControlName="salePrice" class="w-full bg-surface-container border-none rounded-lg p-4 pl-10 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all font-body disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0.00" step="0.01" type="number" />
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase" [ngClass]="inventoryForm.get('wastePercent')?.disabled ? 'opacity-50' : ''">% Sobrante o residuos</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">recycling</span>
+                            <input formControlName="wastePercent" class="w-full bg-surface-container border-none rounded-lg p-4 pl-12 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all font-body disabled:opacity-50 disabled:cursor-not-allowed" placeholder="0" step="0.1" type="number" max="100" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Components Section -->
+                @if (inventoryForm.get('type')?.value === 'ELABORADO' || inventoryForm.get('type')?.value === 'TRANSFORMADO') {
+                <div class="pt-6 border-t border-stone-100">
+                    <h3 class="font-headline font-bold text-lg text-on-background tracking-tight mb-4">Componentes del Artículo</h3>
+                    <div class="space-y-4" formArrayName="components">
+                        <div class="flex justify-between items-center">
+                            <label class="font-headline font-bold text-xs tracking-tight text-stone-500 uppercase">Lista de Componentes</label>
+                            <button type="button" (click)="addComponent()" class="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold hover:bg-primary/20 transition-colors text-sm flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">add</span> Añadir
+                            </button>
+                        </div>
+                        
+                        @if (componentsFormArray.length > 0) {
+                        <div class="overflow-x-auto rounded-lg border border-stone-100">
+                            <table class="w-full text-left text-sm font-body">
+                                <thead class="bg-stone-50 border-b border-stone-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-stone-600 uppercase tracking-wider text-[11px]">ID Inventario</th>
+                                        <th class="px-4 py-3 font-bold text-stone-600 uppercase tracking-wider text-[11px] w-24">Cant.</th>
+                                        <th class="px-4 py-3 font-bold text-stone-600 uppercase tracking-wider text-[11px] w-16 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-stone-50">
+                                    @for (comp of componentsFormArray.controls; track $index; let i = $index) {
+                                    <tr [formGroupName]="i" class="hover:bg-stone-50/50 transition-colors group">
+                                        <td class="px-4 py-2">
+                                            <input formControlName="inventoryId" type="text" class="w-full bg-transparent border-b border-stone-200 focus:border-primary focus:ring-0 p-1" placeholder="ID de artículo">
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <input formControlName="quantity" type="number" step="0.01" class="w-full bg-transparent border-b border-stone-200 focus:border-primary focus:ring-0 p-1 text-right">
+                                        </td>
+                                        <td class="px-4 py-2 text-center">
+                                            <button type="button" (click)="removeComponent(i)" class="text-stone-400 hover:text-error transition-colors p-1 rounded-md hover:bg-error/10">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        } @else {
+                            <div class="bg-stone-50 text-stone-500 text-center p-6 rounded-lg text-sm border border-dashed border-stone-200">
+                                No se han añadido componentes.
+                            </div>
+                        }
+                    </div>
+                </div>
+                }
+
+                <div class="pt-6 border-t border-stone-100 flex items-center justify-end gap-4">
+                    <button (click)="closeForm()" class="px-6 py-3 rounded-lg font-bold text-stone-500 hover:bg-stone-50 transition-colors" type="button">Cancelar</button>
+                    <button [disabled]="!inventoryForm.valid" class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-3 rounded-lg font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed" type="submit">
+                        {{ viewMode === 'add' ? 'Agregar Artículo' : 'Actualizar Artículo' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="md:col-span-4 space-y-6">
+            <div class="bg-primary/5 rounded-xl p-6 border-l-4 border-primary">
+                <h3 class="font-headline font-bold text-primary mb-2">Consejo</h3>
+                <p class="text-sm text-stone-600 leading-relaxed">Para artículos <b>Elaborados</b> o <b>Transformados</b>, asegúrate de agregar todos los componentes necesarios para calcular correctamente el costo de producción.</p>
+            </div>
+            <div class="bg-stone-100 rounded-xl p-6 border-l-4 border-stone-400">
+                <h3 class="font-headline font-bold text-stone-700 mb-2">Ayuda</h3>
+                <p class="text-sm text-stone-500 leading-relaxed">Los campos marcados con <span class="text-error font-bold">*</span> son obligatorios. El <b>% Sobrante</b> ayuda a calcular el desperdicio estimado en producción.</p>
+            </div>
+        </div>
+    </div>
+</main>
+}
+
+<!-- Form Success Modal -->
+@if (showFormSuccessModal) {
+    <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <button class="absolute inset-0 bg-on-background/40 backdrop-blur-sm border-none w-full h-full cursor-default" (click)="closeFormSuccessModal(true)"></button>
+        <div class="relative bg-surface-container-lowest w-full max-w-lg rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden animate-[dropdownFadeIn_0.2s_ease-out]">
+            <div class="h-2 w-full bg-gradient-to-r from-primary to-primary-container"></div>
+            <div class="p-10 text-center">
+                <div class="relative mb-8 flex justify-center">
+                    <div class="absolute inset-0 bg-primary/10 rounded-full scale-150 blur-xl"></div>
+                    <div class="relative w-24 h-24 bg-gradient-to-br from-primary to-primary-container rounded-full flex items-center justify-center shadow-lg">
+                        <span class="material-symbols-outlined text-white text-5xl" style="font-variation-settings: 'wght' 600;">check_circle</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-extrabold text-on-surface tracking-tight mb-4 font-headline">
+                    {{ viewMode === 'add' ? 'Artículo Agregado con Éxito' : 'Artículo Actualizado' }}
+                </h2>
+                <p class="text-on-surface-variant text-lg leading-relaxed font-body px-4">
+                    {{ viewMode === 'add' ? 'El nuevo artículo ha sido registrado correctamente.' : 'Los detalles del artículo han sido modificados.' }}
+                </p>
+                <div class="mt-10 flex flex-col gap-3">
+                    <button (click)="closeFormSuccessModal(true)" class="group relative flex items-center justify-center gap-2 w-full py-4 px-6 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-sm active:scale-[0.98] transition-all overflow-hidden">
+                        <span class="relative z-10">Ir al Inventario</span>
+                        <span class="material-symbols-outlined relative z-10 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                    <button (click)="closeFormSuccessModal(false)" class="w-full py-4 px-6 bg-secondary-container/30 text-on-secondary-container font-bold rounded-lg hover:bg-secondary-container/50 active:scale-[0.98] transition-all">
+                        {{ viewMode === 'add' ? 'Agregar otro artículo' : 'Seguir editando' }}
+                    </button>
+                </div>
+                <button (click)="closeFormSuccessModal(true)" class="mt-6 text-stone-400 hover:text-primary transition-colors text-sm font-medium tracking-wide">
+                    Cerrar ventana
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Delete Article Confirmation Modal -->
 @if (showDeleteModal && selectedProduct) {

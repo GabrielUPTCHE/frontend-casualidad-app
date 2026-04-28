@@ -17,10 +17,9 @@ export class LayoutComponent {
 
   currentUser: UserDTO = {
     id: 'admin',
-    firstName: 'Administrador',
-    lastName: '',
+    nombre: 'Administrador',
     email: 'admin@casualidad.com',
-    phone: ''
+    rol: 'ADMINISTRADOR'
   };
 
   @HostListener('document:click', ['$event'])

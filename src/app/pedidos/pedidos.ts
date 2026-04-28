@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { PaginationComponent } from '../shared/pagination/pagination';
 import { OrderSummaryDTO, OrderStatus } from '../core/models/order.dto';
 
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent],
   templateUrl: './pedidos.html',
   styleUrls: ['./pedidos.css']
 })
@@ -29,13 +29,86 @@ export class PedidosComponent implements OnInit {
 
   // Mapa de estado para UI
   statusMap: Record<OrderStatus, { text: string, css: string }> = {
-    'PENDING_ACCEPTANCE': { text: 'Pendiente Aceptación', css: 'bg-orange-100 text-orange-700' },
-    'PENDING_PAYMENT': { text: 'Pendiente Pago', css: 'bg-orange-100 text-orange-700' },
-    'IN_PRODUCTION': { text: 'En producción', css: 'bg-blue-100 text-blue-700' },
+    'PENDING_ACCEPTANCE': { text: 'Pendiente de Aceptación', css: 'bg-orange-100 text-orange-700' },
+    'PENDING_PAYMENT': { text: 'Pendiente de Pago', css: 'bg-orange-100 text-orange-700' },
+    'EN_PRODUCCION': { text: 'En Producción', css: 'bg-blue-100 text-blue-700' },
+    'IN_PRODUCTION': { text: 'En Producción', css: 'bg-blue-100 text-blue-700' },
     'DONE': { text: 'Terminado', css: 'bg-green-100 text-green-700' },
-    'DELIVERED': { text: 'Entregado', css: 'bg-emerald-100 text-emerald-800' },
+    'DELIVERED': { text: 'Entregado', css: 'bg-green-100 text-green-700' },
     'CANCELLED': { text: 'Cancelado', css: 'bg-red-100 text-red-700' }
   };
+
+  // Forms state
+  viewMode: 'list' | 'add' | 'edit' | 'view' | 'formalize' = 'list';
+  orderForm: FormGroup;
+  showFormSuccessModal = false;
+
+  // Mock data for dropdowns
+  clients = ['Sofía Martínez', 'Mariana López', 'Empresa Soluciones IT', 'Carlos Restrepo'];
+  productsList = [
+    { id: '1', name: 'Crónicas de Casualidad', price: 24.99 },
+    { id: '2', name: 'El Arte del Azar', price: 55.00 },
+    { id: '3', name: 'Revista Mensual Ed. 12', price: 12.50 },
+    { id: '4', name: 'Kit Creativo Transformado', price: 89.99 }
+  ];
+
+  constructor(private fb: FormBuilder) {
+    this.orderForm = this.fb.group({
+      id: [''],
+      clientId: ['', Validators.required],
+      eventType: [''],
+      forWhom: [''],
+      deliveryDate: ['', Validators.required],
+      status: ['PENDING_ACCEPTANCE', Validators.required],
+      finalPrice: [0, [Validators.min(0)]],
+      specifications: [''],
+      items: this.fb.array([])
+    });
+
+    // Auto-calculate total
+    this.itemsFormArray.valueChanges.subscribe(items => {
+      let total = 0;
+      if (items && Array.isArray(items)) {
+        total = items.reduce((acc, item) => acc + ((item.quantity || 0) * (item.unitPrice || 0)), 0);
+      }
+      // Only set if user hasn't overridden finalPrice manually, or if we want to force it
+      // For simplicity, we just update a getter or the field if untouched.
+    });
+  }
+
+  get itemsFormArray(): FormArray {
+    return this.orderForm.get('items') as FormArray;
+  }
+
+  get subtotalEstimate(): number {
+    return this.itemsFormArray.controls.reduce((acc, ctrl) => {
+      const q = ctrl.get('quantity')?.value || 0;
+      const p = ctrl.get('unitPrice')?.value || 0;
+      return acc + (q * p);
+    }, 0);
+  }
+
+  addItem() {
+    this.itemsFormArray.push(this.fb.group({
+      productId: ['', Validators.required],
+      quantity: [1, [Validators.required, Validators.min(1)]],
+      unitPrice: [0, [Validators.required, Validators.min(0)]],
+      customization: ['']
+    }));
+  }
+
+  removeItem(index: number) {
+    this.itemsFormArray.removeAt(index);
+  }
+
+  onProductSelect(index: number) {
+    const itemGroup = this.itemsFormArray.at(index) as FormGroup;
+    const productId = itemGroup.get('productId')?.value;
+    const prod = this.productsList.find(p => p.id === productId || p.name === productId);
+    if (prod) {
+      itemGroup.patchValue({ unitPrice: prod.price });
+    }
+  }
 
   ngOnInit() {
     this.applyFiltersAndSort();
@@ -73,9 +146,9 @@ export class PedidosComponent implements OnInit {
     if (this.searchTerm.trim() !== '') {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(o => 
-        o.code?.toLowerCase().includes(term) ||
-        o.id.toLowerCase().includes(term) ||
-        o.clientName.toLowerCase().includes(term)
+        (o.idPedido ? String(o.idPedido).includes(term) : false) ||
+        (o.codigoUnico ? o.codigoUnico.toLowerCase().includes(term) : false) ||
+        (o.cliente?.nombreCompleto ? o.cliente.nombreCompleto.toLowerCase().includes(term) : false)
       );
     }
 
@@ -93,13 +166,12 @@ export class PedidosComponent implements OnInit {
             valB = b.clientName;
             break;
           case 'estado':
-            // Order defined logically if needed, fallback to string sorting
             valA = a.status;
             valB = b.status;
             break;
           case 'fecha':
-            valA = new Date(a.deliveryDate).getTime();
-            valB = new Date(b.deliveryDate).getTime();
+            valA = a.fechaEntrega ? new Date(a.fechaEntrega).getTime() : 0;
+            valB = b.fechaEntrega ? new Date(b.fechaEntrega).getTime() : 0;
             break;
           case 'saldo':
             valA = a.pendingBalance;
@@ -149,5 +221,58 @@ export class PedidosComponent implements OnInit {
 
   closeSuccessModal() {
     this.showSuccessModal = false;
+  }
+
+  // --- FORM ACTIONS ---
+  openAddForm() {
+    this.orderForm.reset({
+      status: 'PENDING_ACCEPTANCE',
+      finalPrice: 0,
+      deliveryDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0]
+    });
+    this.itemsFormArray.clear();
+    this.addItem(); // default 1 empty item
+    this.viewMode = 'add';
+  }
+
+  openEditForm(order: OrderSummaryDTO) {
+    this.orderForm.patchValue({
+      idPedido: order.idPedido || 0,
+      codigoUnico: order.codigoUnico || '',
+      estadoPedido: order.estadoPedido,
+      fechaEntrega: order.fechaEntrega ? order.fechaEntrega.split('T')[0] : '',
+      total: order.total,
+      saldoPendiente: order.saldoPendiente,
+      cliente: order.cliente
+    });
+    this.itemsFormArray.clear();
+    // Normally we would populate items from order details.
+    // For now add one dummy item since it's a summary list.
+    this.addItem();
+    
+    this.viewMode = 'edit';
+  }
+
+  closeForm() {
+    this.viewMode = 'list';
+  }
+
+  saveOrder() {
+    if (this.orderForm.valid) {
+      this.showFormSuccessModal = true;
+    } else {
+      this.orderForm.markAllAsTouched();
+    }
+  }
+
+  closeFormSuccessModal(goToList: boolean) {
+    this.showFormSuccessModal = false;
+    if (goToList) {
+      this.viewMode = 'list';
+    } else {
+      if (this.viewMode === 'add') {
+        this.openAddForm();
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoginResponseDTO } from '../core/models/auth.dto';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ import { LoginResponseDTO } from '../core/models/auth.dto';
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -51,17 +53,17 @@ export class LoginComponent {
       // Simulando delay de red y respuesta de la API
       setTimeout(() => {
         const simulatedResponse: LoginResponseDTO = {
-            access_token: 'fake-jwt-token',
-            refresh_token: 'fake-refresh-token',
-            user: {
-                id: 'admin-uuid',
-                firstName: 'Administrador',
-                lastName: '',
+            accessToken: 'fake-jwt-token',
+            refreshToken: 'fake-refresh-token',
+            usuario: {
+                id: '1',
+                nombre: 'Administrador',
                 email: this.VALID_EMAIL,
-                phone: '0000000000'
+                rol: 'ADMINISTRADOR'
             }
         };
         console.log('Login exitoso:', simulatedResponse);
+        this.authService.setSession(simulatedResponse);
         this.router.navigate(['/']);
         this.isLoading = false;
       }, 800);

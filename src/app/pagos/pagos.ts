@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PaginationComponent } from '../shared/pagination/pagination';
 import { PaymentDTO, PaymentStatus, PaymentType } from '../core/models/payment.dto';
 
 @Component({
   selector: 'app-pagos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent],
   templateUrl: './pagos.html',
   styleUrls: ['./pagos.css']
 })
@@ -21,6 +21,8 @@ export class PagosComponent implements OnInit {
   
   currentPage = 1;
   pageSize = 5;
+
+  currentSort = { column: '', direction: 'asc' as 'asc' | 'desc' };
 
   // Modals state
   showDeleteModal = false;
@@ -38,6 +40,26 @@ export class PagosComponent implements OnInit {
     'CASH': { text: 'Efectivo', icon: 'payments' },
     'TRANSFER': { text: 'Transferencia', icon: 'account_balance' }
   };
+
+  // Forms state
+  viewMode: 'list' | 'add' | 'edit' = 'list';
+  paymentForm: FormGroup;
+  showFormSuccessModal = false;
+
+  // Mocks
+  orders = ['#CL-1024 - Sofía Martínez', '#CL-1025 - Julian Castro', '#CL-1026 - Elena Pardo'];
+
+  constructor(private fb: FormBuilder) {
+    this.paymentForm = this.fb.group({
+      id: [''],
+      orderId: ['', Validators.required],
+      date: ['', Validators.required],
+      amount: [0, [Validators.required, Validators.min(0.01)]],
+      type: ['', Validators.required],
+      evidence: [''], // Optional
+      status: ['COMPLETED', Validators.required]
+    });
+  }
 
   ngOnInit() {
     this.applyFilters();
@@ -77,6 +99,17 @@ export class PagosComponent implements OnInit {
       );
     }
 
+    // Sort
+    if (this.currentSort.column) {
+      result.sort((a, b) => {
+        const valA = (a as any)[this.currentSort.column];
+        const valB = (b as any)[this.currentSort.column];
+        if (valA < valB) return this.currentSort.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return this.currentSort.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
     this.filteredPayments = result;
 
     // Paginate
@@ -88,6 +121,21 @@ export class PagosComponent implements OnInit {
       this.currentPage = 1;
       this.applyFilters();
     }
+  }
+
+  handleSort(column: string) {
+    if (this.currentSort.column === column) {
+      this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.currentSort.column = column;
+      this.currentSort.direction = 'asc';
+    }
+    this.applyFilters();
+  }
+
+  getSortIcon(column: string): string {
+    if (this.currentSort.column !== column) return 'unfold_more';
+    return this.currentSort.direction === 'asc' ? 'expand_less' : 'expand_more';
   }
 
   get totalMonthlyBalance(): number {
@@ -132,5 +180,49 @@ export class PagosComponent implements OnInit {
   closeSuccessModal() {
     this.showSuccessModal = false;
     this.selectedPayment = null;
+  }
+
+  // --- FORM ACTIONS ---
+  openAddForm() {
+    this.paymentForm.reset({
+      date: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm
+      status: 'COMPLETED'
+    });
+    this.viewMode = 'add';
+  }
+
+  openEditForm(payment: PaymentDTO) {
+    this.paymentForm.patchValue({
+      id: payment.id,
+      orderId: payment.orderId, // We assume matching mock strings or similar logic
+      date: payment.createdAt.slice(0, 16), // Strip milliseconds/Z if needed for datetime-local
+      amount: payment.amount,
+      type: payment.type,
+      status: payment.status
+    });
+    this.viewMode = 'edit';
+  }
+
+  closeForm() {
+    this.viewMode = 'list';
+  }
+
+  savePayment() {
+    if (this.paymentForm.valid) {
+      this.showFormSuccessModal = true;
+    } else {
+      this.paymentForm.markAllAsTouched();
+    }
+  }
+
+  closeFormSuccessModal(goToList: boolean) {
+    this.showFormSuccessModal = false;
+    if (goToList) {
+      this.viewMode = 'list';
+    } else {
+      if (this.viewMode === 'add') {
+        this.openAddForm();
+      }
+    }
   }
 }

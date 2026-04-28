@@ -1,3 +1,4 @@
+@if (viewMode === 'list') {
 <div class="p-10 space-y-10 animate-[dropdownFadeIn_0.3s_ease-out]">
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-end gap-6">
@@ -11,7 +12,7 @@
     <!-- Action Grid (Editorial Bento) -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-64">
         <!-- Add User Action -->
-        <button class="md:col-span-7 group relative overflow-hidden bg-white rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] flex items-center p-8 transition-all hover:-translate-y-1">
+        <button (click)="openAddForm()" class="md:col-span-7 group relative overflow-hidden bg-white rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] flex items-center p-8 transition-all hover:-translate-y-1">
             <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                 <span class="material-symbols-outlined text-[120px]">person_add</span>
             </div>
@@ -52,7 +53,11 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-surface-container/30">
-                        <th class="px-8 py-5 text-xs font-black uppercase tracking-widest text-on-surface-variant">Usuario</th>
+                        <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-8 py-5 text-xs font-black uppercase tracking-widest text-on-surface-variant group"
+                            (click)="handleSort('firstName')">
+                            Usuario
+                            <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'firstName' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('firstName') }}</span>
+                        </th>
                         <th class="px-8 py-5 text-xs font-black uppercase tracking-widest text-on-surface-variant text-right">Acciones</th>
                     </tr>
                 </thead>
@@ -61,14 +66,14 @@
                         <tr class="group hover:bg-surface-container-low/40 transition-colors user-row">
                             <td class="px-8 py-5">
                                 <div>
-                                    <h4 class="font-bold text-on-surface group-hover:text-primary transition-colors">{{ user.firstName }} {{ user.lastName }}</h4>
+                                    <h4 class="font-bold text-on-surface group-hover:text-primary transition-colors">{{ user.nombre }}</h4>
                                     <p class="text-sm text-on-surface-variant">{{ user.email }}</p>
                                 </div>
                             </td>
                             <td class="px-8 py-5 text-right">
                                 <div class="flex justify-end gap-2">
-                                    <button class="p-2 text-zinc-400 hover:text-primary transition-colors">
-                                        <span class="material-symbols-outlined text-xl">visibility</span>
+                                    <button (click)="openEditForm(user)" class="p-2 text-zinc-400 hover:text-primary transition-colors">
+                                        <span class="material-symbols-outlined text-xl">edit</span>
                                     </button>
                                     <button (click)="openDeleteModal(user)" class="p-2 text-zinc-400 hover:text-error transition-colors">
                                         <span class="material-symbols-outlined text-xl">delete_forever</span>
@@ -99,6 +104,112 @@
         </div>
     </div>
 </div>
+}
+
+@if (viewMode === 'add' || viewMode === 'edit') {
+<!-- Form Content -->
+<section class="p-10 max-w-5xl mx-auto w-full animate-[dropdownFadeIn_0.2s_ease-out]">
+    <div class="mb-12">
+        <nav class="flex gap-2 text-xs font-bold tracking-widest text-orange-700 mb-4">
+            <button type="button" class="opacity-50 hover:opacity-100 transition-opacity" (click)="closeForm()">USUARIOS</button>
+            <span class="opacity-50">/</span>
+            <span>{{ viewMode === 'add' ? 'AÑADIR' : 'EDITAR' }} USUARIO</span>
+        </nav>
+        <h2 class="text-5xl font-extrabold text-stone-900 font-headline tracking-tighter mb-4">
+            {{ viewMode === 'add' ? 'Nuevo perfil de usuario' : 'Editar perfil de usuario' }}
+        </h2>
+        <p class="text-lg text-stone-500 max-w-2xl leading-relaxed">
+            {{ viewMode === 'add' 
+                ? 'Complete la información básica para dar de alta un nuevo miembro en el sistema. Asegúrese de que el correo electrónico sea válido.'
+                : 'Modifique la información del usuario. Los cambios se reflejarán inmediatamente en el sistema.' }}
+        </p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+        <div class="md:col-span-8 bg-surface-container-lowest rounded-xl p-10 shadow-[0px_12px_32px_rgba(45,47,47,0.04)]">
+            <form class="space-y-8" [formGroup]="userForm" (ngSubmit)="saveUser()">
+                
+                @if (viewMode === 'edit') {
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold tracking-wider text-stone-500 uppercase">ID de Usuario</label>
+                        <input class="w-full bg-stone-100 border-none rounded-lg px-4 py-3 text-stone-600 cursor-not-allowed"
+                               type="text" formControlName="id" readonly>
+                    </div>
+                }
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold tracking-wider text-stone-500 uppercase">Nombres <span class="text-primary">*</span></label>
+                        <input class="w-full bg-stone-50 border-none focus:ring-2 focus:ring-primary/40 focus:bg-white rounded-lg px-4 py-3 transition-all text-stone-800 placeholder:text-stone-300"
+                            placeholder="Ej. Juan" type="text" formControlName="firstName">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold tracking-wider text-stone-500 uppercase">Apellidos <span class="text-primary">*</span></label>
+                        <input class="w-full bg-stone-50 border-none focus:ring-2 focus:ring-primary/40 focus:bg-white rounded-lg px-4 py-3 transition-all text-stone-800 placeholder:text-stone-300"
+                            placeholder="Ej. Pérez" type="text" formControlName="lastName">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold tracking-wider text-stone-500 uppercase">E-mail <span class="text-primary">*</span></label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">mail</span>
+                        <input class="w-full bg-stone-50 border-none focus:ring-2 focus:ring-primary/40 focus:bg-white rounded-lg pl-11 pr-4 py-3 transition-all text-stone-800 placeholder:text-stone-300"
+                            placeholder="juan.perez@casualidad.com" type="email" formControlName="email">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold tracking-wider text-stone-500 uppercase">Teléfono</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">phone</span>
+                        <input class="w-full bg-stone-50 border-none focus:ring-2 focus:ring-primary/40 focus:bg-white rounded-lg pl-11 pr-4 py-3 transition-all text-stone-800 placeholder:text-stone-300"
+                            placeholder="300 000 0000" type="tel" formControlName="phone">
+                    </div>
+                </div>
+
+                <div class="pt-6 flex items-center justify-between gap-4 border-t border-stone-100">
+                    <button (click)="closeForm()" class="px-8 py-3 text-stone-500 font-bold hover:bg-stone-50 rounded-lg transition-colors" type="button">
+                        Cancelar
+                    </button>
+                    <button class="px-10 py-3 bg-[#ff904c] text-white font-extrabold rounded-lg shadow-[0px_8px_24px_rgba(255,144,76,0.3)] hover:shadow-[0px_12px_32px_rgba(255,144,76,0.4)] active:scale-95 transition-all"
+                            type="submit" [disabled]="!userForm.valid" [class.opacity-50]="!userForm.valid">
+                        {{ viewMode === 'add' ? 'Guardar Usuario' : 'Actualizar Usuario' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Sidebar -->
+        <div class="md:col-span-4 space-y-6">
+            <div class="bg-stone-100 rounded-xl p-8">
+                <div class="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center text-orange-800 mb-4">
+                    <span class="material-symbols-outlined">{{ viewMode === 'add' ? 'info' : 'edit_document' }}</span>
+                </div>
+                <h4 class="text-lg font-bold text-stone-900 mb-2">{{ viewMode === 'add' ? 'Requisitos de Registro' : 'Edición de Usuario' }}</h4>
+                <p class="text-sm text-stone-600 leading-relaxed mb-4">Los campos marcados con <span class="text-primary font-bold">*</span> son obligatorios</p>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-2 text-xs text-stone-500">
+                        <span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+                        <span>Verificación de usuario automática.</span>
+                    </li>
+                    <li class="flex items-start gap-2 text-xs text-stone-500">
+                        <span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+                        <span>Asignación de contraseña por defecto.</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="relative overflow-hidden rounded-xl aspect-square group">
+                <img alt="Team collaborating" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeEFvaJ3pBEsGhhayK1nMM61zGRHDAErWy14gYDqKea-noSaVA6-u8l9FZlLMo3pV53CIGvI6rJzuyac2BrDGzKyPUWruIpuDoyF4YPlRqPmf0PkjDxsn1DCY13PLbkzgCbtCIPD99V79_a2SDpPK68jxilZPgq6fAy3uWcIkLWeCeQtp1FRWLyd2GkdJYE4ObLkhqfWqZFFfY1psC17cSge9x1G0es8-xdXIFI7N95QY-McEYs_Nzul3kdlJy7RHwE8Fjdkas-2I">
+                <div class="absolute inset-0 bg-gradient-to-t from-orange-950/60 to-transparent flex flex-col justify-end p-6">
+                    <p class="text-white font-headline font-bold text-xl leading-tight">Fortalece tu equipo de gestión.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+}
+
 
 <!-- Delete User Confirmation Modal -->
 @if (showDeleteModal && userToDelete) {
@@ -115,7 +226,7 @@
                 </div>
                 <h2 class="text-2xl font-extrabold text-on-surface tracking-tight mb-3 font-headline">¿Eliminar usuario?</h2>
                 <p class="text-on-surface-variant text-base leading-relaxed font-body">
-                    ¿Estás seguro de que deseas eliminar a <span class="font-bold text-primary">{{ userToDelete.firstName }} {{ userToDelete.lastName }}</span>? 
+                    ¿Estás seguro de que deseas eliminar a <span class="font-bold text-primary">{{ userToDelete.nombre }}</span>? 
                     Esta acción <span class="text-error font-bold">no se puede deshacer</span>.
                 </p>
                 <div class="mt-8 flex flex-col gap-3">
@@ -152,6 +263,55 @@
                 <div class="mt-8">
                     <button (click)="closeSuccessModal()" class="w-full py-3.5 px-6 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-all">Continuar</button>
                 </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Form Success Modal -->
+@if (showFormSuccessModal) {
+    <div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <!-- Uso de button para fondo oscuro para accesibilidad (SonarQube) -->
+        <button class="absolute inset-0 bg-on-background/40 backdrop-blur-sm border-none w-full h-full cursor-default" (click)="closeFormSuccessModal(true)"></button>
+        <div class="relative bg-surface-container-lowest w-full max-w-lg rounded-xl shadow-[0px_12px_32px_rgba(45,47,47,0.06)] overflow-hidden">
+            <div class="h-2 w-full bg-gradient-to-r from-primary to-primary-container"></div>
+            <div class="p-10 text-center">
+                <div class="relative mb-8 flex justify-center">
+                    <div class="absolute inset-0 bg-primary/10 rounded-full scale-150 blur-xl"></div>
+                    <div class="relative w-24 h-24 bg-gradient-to-br from-primary to-primary-container rounded-full flex items-center justify-center shadow-lg">
+                        <span class="material-symbols-outlined text-white text-5xl" style="font-variation-settings: 'wght' 600;">check_circle</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-extrabold text-on-surface tracking-tight mb-4 font-headline">
+                    {{ viewMode === 'add' ? 'Usuario Añadido con Éxito' : 'Usuario Actualizado con Éxito' }}
+                </h2>
+                <p class="text-on-surface-variant text-lg leading-relaxed font-body px-4">
+                    {{ viewMode === 'add' 
+                        ? 'El perfil para el nuevo miembro ha sido creado correctamente en el sistema.' 
+                        : 'Los datos del usuario han sido modificados correctamente en el sistema.' }}
+                </p>
+                <div class="mt-10 flex flex-col gap-3">
+                    <button (click)="closeFormSuccessModal(true)"
+                        class="group relative flex items-center justify-center gap-2 w-full py-4 px-6 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-sm active:scale-[0.98] transition-all overflow-hidden">
+                        <span class="relative z-10">Ir al Listado</span>
+                        <span class="material-symbols-outlined relative z-10 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                    <button (click)="closeFormSuccessModal(false)"
+                        class="w-full py-4 px-6 bg-secondary-container/30 text-on-secondary-container font-bold rounded-lg hover:bg-secondary-container/50 active:scale-[0.98] transition-all">
+                        {{ viewMode === 'add' ? 'Añadir otro' : 'Seguir editando' }}
+                    </button>
+                </div>
+                <button (click)="closeFormSuccessModal(true)"
+                    class="mt-6 text-stone-400 hover:text-primary transition-colors text-sm font-medium tracking-wide">
+                    Cerrar ventana
+                </button>
+            </div>
+            <div class="absolute bottom-0 right-0 opacity-10 pointer-events-none">
+                <svg fill="none" height="120" viewbox="0 0 120 120" width="120" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="text-primary" cx="100" cy="100" r="80" stroke="currentColor" stroke-width="2"></circle>
+                    <circle class="text-primary" cx="100" cy="100" r="60" stroke="currentColor" stroke-width="2"></circle>
+                    <circle class="text-primary" cx="100" cy="100" r="40" stroke="currentColor" stroke-width="2"></circle>
+                </svg>
             </div>
         </div>
     </div>
