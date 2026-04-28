@@ -214,14 +214,14 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
-                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Stock mínimo</label>
+                        <label for="minStock" class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Stock mínimo</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">inventory</span>
                             <input id="minStock" formControlName="minStock" class="w-full bg-surface-container border-none rounded-lg p-4 pl-12 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all font-body" placeholder="0" type="number" step="any" />
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <label class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Costo de producción *</label>
+                        <label for="productionCost" class="font-headline font-bold text-sm tracking-tight text-primary uppercase">Costo de producción *</label>
                         <div class="relative flex items-center">
                             <span class="absolute left-4 font-bold text-stone-500">$</span>
                             <input id="productionCost" formControlName="productionCost" type="number" step="0.01" class="w-full bg-surface-container border-none rounded-lg p-4 pl-8 focus:ring-2 focus:ring-primary/40 focus:bg-surface-container-lowest transition-all font-body" />

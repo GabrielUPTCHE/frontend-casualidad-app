@@ -80,4 +80,24 @@ describe('PagosComponent', () => {
     component.closeSuccessModal();
     expect(component.showSuccessModal).toBe(false);
   });
+
+  it('should handle form operations', () => {
+    component.openAddForm();
+    expect(component.viewMode).toBe('add');
+    component.closeForm();
+    expect(component.viewMode).toBe('list');
+
+    Object.defineProperty(component.paymentForm, 'valid', {get: () => true});
+    component.savePayment();
+    expect(component.showFormSuccessModal).toBe(true);
+
+    component.closeFormSuccessModal(true);
+    expect(component.viewMode).toBe('list');
+    
+    component.viewMode = 'add';
+    component.showFormSuccessModal = true;
+    component.closeFormSuccessModal(false);
+    expect(component.viewMode).toBe('add');
+  });
+
 });

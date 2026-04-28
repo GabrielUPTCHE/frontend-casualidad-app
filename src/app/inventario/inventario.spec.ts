@@ -58,4 +58,27 @@ describe('InventarioComponent', () => {
     component.closeSuccessModal();
     expect(component.showSuccessModal).toBe(false);
   });
+
+  it('should handle form operations', () => {
+    component.openAddForm();
+    expect(component.viewMode).toBe('add');
+    component.closeForm();
+    expect(component.viewMode).toBe('list');
+
+    component.openEditForm({ id: '1', name: 'A', type: 'INSUMO', unit: {id:'1', name:'U'}, minStock: 2, stock: 5, purchasePrice: 10, salePrice: null, wastePercent: null, productionCost: null, isLowStock: true, composition: null } as any);
+    expect(component.viewMode).toBe('edit');
+    
+    Object.defineProperty(component.inventoryForm, 'valid', {get: () => true});
+    component.saveProduct();
+    expect(component.showFormSuccessModal).toBe(true);
+
+    component.closeFormSuccessModal(true);
+    expect(component.viewMode).toBe('list');
+
+    component.viewMode = 'edit';
+    component.showFormSuccessModal = true;
+    component.closeFormSuccessModal(false);
+    expect(component.viewMode).toBe('edit');
+  });
+
 });

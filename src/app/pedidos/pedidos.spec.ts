@@ -71,4 +71,27 @@ describe('PedidosComponent', () => {
     component.closeSuccessModal();
     expect(component.showSuccessModal).toBe(false);
   });
+
+  it('should handle form operations', () => {
+    component.openAddForm();
+    expect(component.viewMode).toBe('add');
+    component.closeForm();
+    expect(component.viewMode).toBe('list');
+
+    component.openEditForm({ idPedido: 1 } as any);
+    expect(component.viewMode).toBe('edit');
+
+    Object.defineProperty(component.orderForm, 'valid', {get: () => true});
+    component.saveOrder();
+    expect(component.showFormSuccessModal).toBe(true);
+
+    component.closeFormSuccessModal(true);
+    expect(component.viewMode).toBe('list');
+    
+    component.viewMode = 'edit';
+    component.showFormSuccessModal = true;
+    component.closeFormSuccessModal(false);
+    expect(component.viewMode).toBe('edit');
+  });
+
 });

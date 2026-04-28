@@ -54,7 +54,7 @@
                 <thead>
                     <tr class="bg-surface-container/30">
                         <th class="cursor-pointer select-none transition-colors hover:bg-black/5 px-8 py-5 text-xs font-black uppercase tracking-widest text-on-surface-variant group"
-                            (click)="handleSort('firstName')">
+                            tabindex="0" (keydown.enter)="handleSort('firstName')" (click)="handleSort('firstName')">
                             Usuario
                             <span class="material-symbols-outlined text-[14px] align-middle ml-1" [ngClass]="currentSort.column === 'firstName' ? 'text-primary' : 'opacity-40 group-hover:opacity-100'">{{ getSortIcon('firstName') }}</span>
                         </th>

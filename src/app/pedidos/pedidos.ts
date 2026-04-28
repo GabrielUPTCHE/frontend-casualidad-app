@@ -69,12 +69,7 @@ export class PedidosComponent implements OnInit {
 
     // Auto-calculate total
     this.itemsFormArray.valueChanges.subscribe(items => {
-      let total = 0;
-      if (items && Array.isArray(items)) {
-        total = items.reduce((acc, item) => acc + ((item.quantity || 0) * (item.unitPrice || 0)), 0);
-      }
-      // Only set if user hasn't overridden finalPrice manually, or if we want to force it
-      // For simplicity, we just update a getter or the field if untouched.
+      // Implementation pending
     });
   }
 

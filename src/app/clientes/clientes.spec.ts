@@ -62,4 +62,27 @@ describe('ClientesComponent', () => {
     expect(component.clientsData.length).toBe(0);
     expect(component.showDeleteModal).toBe(false);
   });
+
+  it('should handle form operations', () => {
+    component.openAddForm();
+    expect(component.viewMode).toBe('add');
+    component.closeForm();
+    expect(component.viewMode).toBe('list');
+
+    component.openEditForm({ id: '1' } as any);
+    expect(component.viewMode).toBe('edit');
+
+    Object.defineProperty(component.clientForm, 'valid', {get: () => true});
+    component.saveClient();
+    expect(component.showFormSuccessModal).toBe(true);
+
+    component.closeFormSuccessModal(true);
+    expect(component.viewMode).toBe('list');
+    
+    component.viewMode = 'edit';
+    component.showFormSuccessModal = true;
+    component.closeFormSuccessModal(false);
+    expect(component.viewMode).toBe('edit');
+  });
+
 });
