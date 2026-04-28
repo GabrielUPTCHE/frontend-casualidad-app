@@ -1,3 +1,4 @@
+import { ListHelper } from '../shared/utils/list-helper';
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
@@ -122,18 +123,12 @@ export class PedidosComponent implements OnInit {
   }
 
   handleSort(column: string) {
-    if (this.currentSort.column === column) {
-      this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.currentSort.column = column;
-      this.currentSort.direction = 'asc';
-    }
+    ListHelper.handleSort(this.currentSort as any, column);
     this.applyFiltersAndSort();
   }
 
   getSortIcon(column: string): string {
-    if (this.currentSort.column !== column) return 'unfold_more';
-    return this.currentSort.direction === 'asc' ? 'expand_less' : 'expand_more';
+    return ListHelper.getSortIcon(this.currentSort as any, column);
   }
 
   private applyFiltersAndSort() {

@@ -1,3 +1,4 @@
+import { ListHelper } from '../shared/utils/list-helper';
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -102,15 +103,7 @@ export class PagosComponent implements OnInit {
     }
 
     // Sort
-    if (this.currentSort.column) {
-      result.sort((a, b) => {
-        const valA = (a as any)[this.currentSort.column];
-        const valB = (b as any)[this.currentSort.column];
-        if (valA < valB) return this.currentSort.direction === 'asc' ? -1 : 1;
-        if (valA > valB) return this.currentSort.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
+    ListHelper.sortArray(this.filteredPayments, this.currentSort as any);
 
     this.filteredPayments = result;
 
@@ -126,18 +119,12 @@ export class PagosComponent implements OnInit {
   }
 
   handleSort(column: string) {
-    if (this.currentSort.column === column) {
-      this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.currentSort.column = column;
-      this.currentSort.direction = 'asc';
-    }
+    ListHelper.handleSort(this.currentSort as any, column);
     this.applyFilters();
   }
 
   getSortIcon(column: string): string {
-    if (this.currentSort.column !== column) return 'unfold_more';
-    return this.currentSort.direction === 'asc' ? 'expand_less' : 'expand_more';
+    return ListHelper.getSortIcon(this.currentSort as any, column);
   }
 
   get totalMonthlyBalance(): number {
