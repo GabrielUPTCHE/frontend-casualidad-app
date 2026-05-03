@@ -196,7 +196,7 @@
 
         <!-- Mobile Cards View -->
         <div class="block md:hidden divide-y divide-zinc-100">
-            @for (product of dataSource.filteredData | slice:(paginator.pageIndex)*(paginator.pageSize):((paginator.pageIndex) + 1)*(paginator.pageSize); track product.id) {
+            @for (product of dataSource.filteredData | slice:(paginator?.pageIndex || 0)*(paginator?.pageSize || 5):((paginator?.pageIndex || 0) + 1)*(paginator?.pageSize || 5); track product.id) {
             <div class="p-6 bg-white hover:bg-stone-50/50 transition-colors">
                 <div class="flex justify-between items-start mb-3">
                     <div>

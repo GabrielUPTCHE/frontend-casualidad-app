@@ -27,7 +27,8 @@ export class ClientService {
 
     return this.http.get<any>(this.apiUrl, { params }).pipe(
       map(res => {
-        // ApiResponse.data = PageResponse, PageResponse.data = lista
+        // ApiResponse structure: { data: PageResponse<ClienteListadoDto> }
+        // PageResponse structure: { data: [], content: [] }
         const page = res.data;
         const list: any[] = page?.data || page?.content || [];
         return list.map((item: any) => ({

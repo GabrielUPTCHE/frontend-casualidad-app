@@ -60,7 +60,7 @@ import { ProductDTO } from '../../../core/models/inventory.dto';
 export class EntradaDialogComponent implements OnInit {
   data = inject(MAT_DIALOG_DATA) as { product: ProductDTO; motivos: {value: string, label: string}[] };
   dialogRef = inject(MatDialogRef<EntradaDialogComponent>);
-  private fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
 
   entradaForm: FormGroup;
   motivos = this.data.motivos;

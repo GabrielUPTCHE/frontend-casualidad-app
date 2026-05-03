@@ -1,4 +1,3 @@
-import { ListHelper } from '../shared/utils/list-helper';
 import { Component, inject, OnInit, AfterViewInit, ChangeDetectorRef, DestroyRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
@@ -95,12 +94,12 @@ export class ClientesComponent implements OnInit, AfterViewInit {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
 
-    this.dataSource.sortingDataAccessor = (item, property) => {
+    this.dataSource.sortingDataAccessor = (item: ClientDTO, property: string) => {
       switch (property) {
         case 'name': return item.name.toLowerCase();
         case 'isActive': return item.isActive ? 1 : 0;
         case 'pedidos': return item.ordersSummary.total;
-        default: return (item as any)[property];
+        default: return (item as any)[property as keyof ClientDTO] as string | number ?? '';
       }
     };
 

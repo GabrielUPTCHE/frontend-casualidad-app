@@ -61,7 +61,7 @@ import { ProductDTO } from '../../../core/models/inventory.dto';
 export class AjusteDialogComponent implements OnInit {
   data = inject(MAT_DIALOG_DATA) as { product: ProductDTO };
   dialogRef = inject(MatDialogRef<AjusteDialogComponent>);
-  private fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
 
   ajusteForm: FormGroup;
 

@@ -1,10 +1,9 @@
-import { ListHelper } from '../shared/utils/list-helper';
 import { Component, inject, OnInit, AfterViewInit, ChangeDetectorRef, DestroyRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { OrderSummaryDTO, OrderStatus } from '../core/models/order.dto';
+import { OrderSummaryDTO } from '../core/models/order.dto';
 import { OrderService } from '../core/services/order.service';
 import { ClientService } from '../core/services/client.service';
 import { InventoryService } from '../core/services/inventory.service';
@@ -155,13 +154,13 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         case 'estado': return item.estadoPedido || '';
         case 'fecha': return item.fechaEntrega ? new Date(item.fechaEntrega).getTime() : 0;
         case 'saldo': return item.saldoPendiente || 0;
-        default: return (item as any)[property];
+        default: return item[property as keyof OrderSummaryDTO] as string | number ?? '';
       }
     };
 
     this.dataSource.filterPredicate = (data, filter) => {
       const dataStr = `${data.idPedido} ${data.codigoUnico} ${data.nombreCliente} ${data.clientName}`.toLowerCase();
-      return dataStr.indexOf(filter) !== -1;
+      return dataStr.includes(filter);
     };
   }
 
@@ -307,48 +306,51 @@ export class PedidosComponent implements OnInit, AfterViewInit {
     if (!id) return;
 
     this.orderService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (detail) => {
-        const targetClientId = detail.cliente?.idCliente ?? detail.idCliente ?? order.idCliente;
-        const targetClientName = detail.cliente?.nombreCompleto ?? order.clientName ?? order.nombreCliente;
-        const matchingClient = this.clientsList.find(c => c.id === Number(targetClientId) || c.nombre === targetClientName);
-
-        this.currentOrderClientName = targetClientName;
-
-        // Update form state outside of the current change detection cycle to prevent NG0100
-        setTimeout(() => {
-          // El backend no requiere el clientId para hacer PUT (ActualizarPedidoDto),
-          // por lo que quitamos el validador en modo edición para no bloquear el botón.
-          this.orderForm.get('clientId')?.clearValidators();
-          this.orderForm.get('clientId')?.updateValueAndValidity();
-
-          this.orderForm.patchValue({
-            id: detail.idPedido,
-            clientId: matchingClient ? matchingClient.id : null,
-            deliveryDate: detail.fechaEntrega ? detail.fechaEntrega.split('T')[0] : ''
-          });
-
-          this.itemsFormArray.clear();
-          if (detail.productos && detail.productos.length > 0) {
-            detail.productos.forEach((p: any) => {
-              const matchingProduct = this.productsList.find(prod => prod.nombre === p.nombreProducto);
-              this.itemsFormArray.push(this.fb.group({
-                idDetalle: [p.idDetalle],
-                productId: [matchingProduct ? matchingProduct.id : null, Validators.required],
-                quantity: [p.cantidad, [Validators.required, Validators.min(1)]],
-                observaciones: [p.observaciones || ''],
-                unitPrice: [p.precioUnitario || 0]
-              }));
-            });
-          } else {
-            this.addItem();
-          }
-
-          this.viewMode = 'edit';
-          this.cdr.detectChanges();
-        });
-      },
+      next: (detail) => this.populateOrderForm(detail, order),
       error: (err) => console.error('Error loading order details', err)
     });
+  }
+
+  private populateOrderForm(detail: any, order: OrderSummaryDTO): void {
+    const targetClientId = detail.cliente?.idCliente ?? detail.idCliente ?? order.idCliente;
+    const targetClientName = detail.cliente?.nombreCompleto ?? order.clientName ?? order.nombreCliente;
+    const matchingClient = this.clientsList.find(c => c.id === Number(targetClientId) || c.nombre === targetClientName);
+
+    this.currentOrderClientName = targetClientName;
+
+    setTimeout(() => {
+      this.orderForm.get('clientId')?.clearValidators();
+      this.orderForm.get('clientId')?.updateValueAndValidity();
+
+      this.orderForm.patchValue({
+        id: detail.idPedido,
+        clientId: matchingClient ? matchingClient.id : null,
+        deliveryDate: detail.fechaEntrega ? detail.fechaEntrega.split('T')[0] : ''
+      });
+
+      this.itemsFormArray.clear();
+      if (detail.productos && detail.productos.length > 0) {
+        this.buildItemsFromProducts(detail.productos);
+      } else {
+        this.addItem();
+      }
+
+      this.viewMode = 'edit';
+      this.cdr.detectChanges();
+    });
+  }
+
+  private buildItemsFromProducts(productos: any[]): void {
+    for (const p of productos) {
+      const matchingProduct = this.productsList.find(prod => prod.nombre === p.nombreProducto);
+      this.itemsFormArray.push(this.fb.group({
+        idDetalle: [p.idDetalle],
+        productId: [matchingProduct ? matchingProduct.id : null, Validators.required],
+        quantity: [p.cantidad, [Validators.required, Validators.min(1)]],
+        observaciones: [p.observaciones || ''],
+        unitPrice: [p.precioUnitario || 0]
+      }));
+    }
   }
 
   closeForm(): void {

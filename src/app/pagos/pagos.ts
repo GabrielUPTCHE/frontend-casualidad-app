@@ -114,7 +114,7 @@ export class PagosComponent implements OnInit {
             id:            String(s.idPedido),
             orderId:       s.codigoPedido ?? String(s.idPedido),
             clientName:    s.nombreCliente ?? 'Desconocido',
-            amount:        Number(s.saldoPendiente) ?? 0,
+            amount:        Number(s.saldoPendiente) || 0,
             type:          'CASH' as PaymentType,
             status:        'PENDING' as PaymentStatus,
             createdAt:     s.fechaEntrega ?? new Date().toISOString(),
@@ -252,7 +252,7 @@ export class PagosComponent implements OnInit {
       id:                    payment.id,
       idPedido:              payment.idPedido,
       amount:                payment.amount,
-      type:                  payment.type === 'CASH' ? 'EFECTIVO' : payment.type === 'TRANSFER' ? 'TRANSFERENCIA' : payment.type,
+      type:                  this.mapPaymentType(payment.type),
       referenciaComprobante: ''
     });
     this.viewMode = 'edit';
@@ -299,5 +299,11 @@ export class PagosComponent implements OnInit {
       this.openAddForm();
     }
     this.cdr.detectChanges();
+  }
+
+  private mapPaymentType(type: string): string {
+    if (type === 'CASH') { return 'EFECTIVO'; }
+    if (type === 'TRANSFER') { return 'TRANSFERENCIA'; }
+    return type;
   }
 }
