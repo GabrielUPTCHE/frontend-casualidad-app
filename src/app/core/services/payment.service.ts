@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { PaginatedResponse, PaymentListItemDTO } from '../models/payment.dto';
 
 /**
  * Servicio para gestión de abonos y reportes de pagos.
@@ -18,7 +19,8 @@ export class PaymentService {
    * Derivamos la base desde authUrl para evitar añadir /v1/.
    */
   private readonly abonosBase = `${environment.authUrl.replace('/auth', '')}/pedidos`;
-  private readonly reportesUrl = `${environment.apiUrl}/reportes`;
+  private readonly reportesUrl = `${environment.apiUrlv2}/reportes`;
+  private readonly paymentUrl = `${environment.apiUrlv2}/pagos`;
   private readonly http = inject(HttpClient);
 
   // ─── ABONOS ──────────────────────────────────────────────────────────────────
@@ -46,6 +48,7 @@ export class PaymentService {
     metodoPago: 'EFECTIVO' | 'TRANSFERENCIA';
     referenciaComprobante?: string;
   }): Observable<any> {
+    console.log(`Editando abono ${idPago} del pedido ${idPedido} con datos:`, data);
     return this.http.put<any>(`${this.abonosBase}/${idPedido}/abonos/${idPago}`, data);
   }
 
@@ -124,5 +127,14 @@ export class PaymentService {
   delete(id: string | number): Observable<void> {
     console.warn('PaymentService.delete(): usa eliminarAbono(idPedido, idPago) en su lugar.');
     return new Observable(obs => obs.error('Usa eliminarAbono(idPedido, idPago)'));
+  }
+
+  getPayments(page: number = 0, size: number = 10): Observable<PaginatedResponse<PaymentListItemDTO>> {
+    // Set up query parameters (?page=0&size=10)
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http.get<PaginatedResponse<PaymentListItemDTO>>(this.paymentUrl, { params });
   }
 }

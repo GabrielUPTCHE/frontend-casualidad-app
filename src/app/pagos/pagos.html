@@ -59,9 +59,10 @@
     <!-- Filtros rápidos -->
     <div class="flex flex-wrap gap-3">
         <button (click)="setFilter('ALL')" [ngClass]="currentFilter === 'ALL' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium shadow-sm transition-all">Todos</button>
-        <button (click)="setFilter('COMPLETED')" [ngClass]="currentFilter === 'COMPLETED' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">Completados</button>
-        <button (click)="setFilter('PENDING')" [ngClass]="currentFilter === 'PENDING' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">Pendientes</button>
-        <button (click)="setFilter('CANCELLED')" [ngClass]="currentFilter === 'CANCELLED' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">Cancelados</button>
+        <button (click)="setFilter('TERMINADO')" [ngClass]="currentFilter === 'TERMINADO' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">Completados</button>
+        <button (click)="setFilter('EN_PRODUCCION')" [ngClass]="currentFilter === 'EN_PRODUCCION' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">En Producción</button>
+        <button (click)="setFilter('PENDIENTE')" [ngClass]="currentFilter === 'PENDIENTE' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">Pendientes</button>
+        <button (click)="setFilter('CANCELADO')" [ngClass]="currentFilter === 'CANCELADO' ? 'bg-primary text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'" class="px-4 py-2 rounded-full text-sm font-medium transition-all">Cancelados</button>
     </div>
 
     <!-- Table Section -->
@@ -109,23 +110,23 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-stone-100">
-                    @for (payment of paginatedPayments; track payment.id) {
+                    @for (payment of paymentsListed; track payment.idPago) {
                         <tr class="hover:bg-orange-50/30 transition-colors group">
-                            <td class="px-8 py-5 text-sm font-bold text-primary">#{{ payment.id.substring(0,8) | uppercase }}</td>
-                            <td class="px-8 py-5"><span class="text-sm font-medium">{{ payment.clientName || 'Desconocido' }}</span></td>
+                            <td class="px-8 py-5 text-sm font-bold text-primary">#{{ payment.idPago.toString().substring(0,8) | uppercase }}</td>
+                            <td class="px-8 py-5"><span class="text-sm font-medium">{{ payment.nombreCliente || 'Desconocido' }}</span></td>
                             <td class="px-8 py-5">
-                                <span class="px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full" [ngClass]="statusMap[payment.status].css">
-                                    {{ statusMap[payment.status].text }}
+                                <span class="px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full" [ngClass]="statusMap[payment.estadoPedido].css">
+                                    {{ statusMap[payment.estadoPedido].text }}
                                 </span>
                             </td>
-                            <td class="px-8 py-5 text-sm text-on-surface-variant font-body">{{ payment.createdAt | date:'mediumDate' }}</td>
+                            <td class="px-8 py-5 text-sm text-on-surface-variant font-body">{{ payment.fechaPago | date:'mediumDate' }}</td>
                             <td class="px-8 py-5">
                                 <div class="flex items-center gap-2 text-sm text-on-surface-variant">
-                                    <span class="material-symbols-outlined text-sm">{{ typeMap[payment.type].icon }}</span>
-                                    {{ typeMap[payment.type].text }}
+                                    <span class="material-symbols-outlined text-sm">{{ typeMap[payment.metodoPago].icon }}</span>
+                                    {{ typeMap[payment.metodoPago].text }}
                                 </div>
                             </td>
-                            <td class="px-8 py-5 font-black text-sm">{{ payment.amount | currency:'USD' }}</td>
+                            <td class="px-8 py-5 font-black text-sm">{{ payment.monto | currency:'USD' }}</td>
                             <td class="px-8 py-5 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <button (click)="openViewModal(payment)" class="p-2 text-zinc-400 hover:text-primary transition-colors" title="Ver detalles">
@@ -151,11 +152,11 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Shared Pagination Component -->
-        <app-pagination 
-            [totalItems]="filteredPayments.length" 
-            [pageSize]="pageSize" 
+        <app-pagination
+            [totalItems]="totalElements"
+            [pageSize]="pageSize"
             [currentPage]="currentPage"
             itemName="transacciones"
             (pageChange)="onPageChange($event)">
@@ -300,7 +301,7 @@
             <div class="px-8 pt-8 pb-4 flex justify-between items-start">
                 <div>
                     <h2 class="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Detalle de Pago</h2>
-                    <p class="text-secondary font-medium mt-1">Pedido asociado: <span class="text-on-surface font-bold">#{{ selectedPayment.orderId }}</span></p>
+                    <p class="text-secondary font-medium mt-1">Pedido asociado: <span class="text-on-surface font-bold">#{{ selectedPayment.idPago }}</span></p>
                 </div>
                 <button (click)="closeViewModal()" class="p-2 hover:bg-surface-container rounded-full transition-colors active:scale-95">
                     <span class="material-symbols-outlined">close</span>
@@ -314,34 +315,34 @@
                         <p class="text-xs uppercase tracking-widest text-outline font-bold">Fecha y hora</p>
                         <p class="text-on-surface font-semibold flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-xl">calendar_today</span>
-                            <span>{{ selectedPayment.createdAt | date:'medium' }}</span>
+                            <span>{{ selectedPayment.fechaPago | date:'medium' }}</span>
                         </p>
                     </div>
                     <div class="space-y-1">
                         <p class="text-xs uppercase tracking-widest text-outline font-bold">Monto del Pago</p>
                         <div class="text-4xl font-headline font-extrabold text-primary-dim tracking-tighter">
-                            <span>{{ selectedPayment.amount | currency:'USD' }}</span>
+                            <span>{{ selectedPayment.monto | currency:'USD' }}</span>
                         </div>
                     </div>
                     <div class="space-y-1">
                         <p class="text-xs uppercase tracking-widest text-outline font-bold">Tipo de pago</p>
                         <p class="text-on-surface font-semibold flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-xl">{{ typeMap[selectedPayment.type].icon }}</span>
-                            <span>{{ typeMap[selectedPayment.type].text }}</span>
+                            <span class="material-symbols-outlined text-primary text-xl">{{ typeMap[selectedPayment.metodoPago].icon }}</span>
+                            <span>{{ typeMap[selectedPayment.metodoPago].text }}</span>
                         </p>
                     </div>
                     <div class="space-y-1">
                         <p class="text-xs uppercase tracking-widest text-outline font-bold">Usuario responsable</p>
-                        <div class="flex items-center gap-3 mt-2 bg-surface-container-low p-3 rounded-xl">                            
+                        <div class="flex items-center gap-3 mt-2 bg-surface-container-low p-3 rounded-xl">
                             <div>
-                                <p class="text-sm font-bold text-on-surface leading-none">{{ selectedPayment.registeredBy.name }}</p>
-                                <p class="text-xs text-zinc-500">ID: {{ selectedPayment.registeredBy.id }}</p>
+                                <p class="text-sm font-bold text-on-surface leading-none">{{ selectedPayment.nombreCliente }}</p>
+                                <p class="text-xs text-zinc-500">ID: {{ selectedPayment.idPedido }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <!-- Right Column: Receipt Image -->
-                <div class="space-y-4">
+                <!-- <div class="space-y-4">
                     <p class="text-xs uppercase tracking-widest text-outline font-bold">Comprobante</p>
                     <div class="group relative rounded-xl overflow-hidden aspect-[3/4] bg-surface-container-high cursor-pointer ring-offset-4 focus-within:ring-2 focus-within:ring-primary">
                         @if (selectedPayment.voucherUrl) {
@@ -359,16 +360,16 @@
                             </div>
                         }
                     </div>
-                </div>
+                </div> -->
             </div>
             <!-- Modal Footer (Glass Bar Style Buttons) -->
-            <div class="px-8 py-8 mt-auto flex flex-col sm:flex-row-reverse gap-4">
+            <!-- <div class="px-8 py-8 mt-auto flex flex-col sm:flex-row-reverse gap-4">
                 <button [disabled]="!selectedPayment.voucherUrl"
                     class="flex-1 bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-bold py-4 px-8 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">download</span>
                     Descargar Comprobante
-                </button>                
-            </div>
+                </button>
+            </div> -->
         </div>
     </div>
 }
@@ -388,7 +389,7 @@
                 </div>
                 <h2 class="text-2xl font-extrabold text-on-surface tracking-tight mb-3 font-headline">¿Eliminar pago?</h2>
                 <p class="text-on-surface-variant text-base leading-relaxed font-body">
-                    ¿Estás seguro de que deseas eliminar este registro de pago de <span class="font-bold text-primary">{{ selectedPayment.amount | currency:'USD' }}</span>?
+                    ¿Estás seguro de que deseas eliminar este registro de pago de <span class="font-bold text-primary">{{ selectedPayment.monto | currency:'USD' }}</span>?
                 </p>
                 <div class="mt-8 flex flex-col gap-3">
                     <button (click)="confirmDelete()" class="group relative flex items-center justify-center gap-2 w-full py-3.5 px-6 bg-gradient-to-br from-error to-error-container text-white font-bold rounded-lg shadow-sm active:scale-[0.98] transition-all overflow-hidden">
