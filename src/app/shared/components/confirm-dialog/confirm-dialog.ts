@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 
@@ -99,10 +99,8 @@ export interface ConfirmDialogData {
   `
 })
 export class ConfirmDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<ConfirmDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData
-  ) {}
+  public readonly dialogRef = inject(MatDialogRef<ConfirmDialogComponent>);
+  public readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
 
   onConfirm(): void {
     this.dialogRef.close(true);

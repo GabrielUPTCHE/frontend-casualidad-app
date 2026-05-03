@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 
@@ -102,10 +102,8 @@ export interface SuccessDialogResult {
   `
 })
 export class SuccessDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<SuccessDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: SuccessDialogData
-  ) {}
+  public readonly dialogRef = inject(MatDialogRef<SuccessDialogComponent>);
+  public readonly data = inject<SuccessDialogData>(MAT_DIALOG_DATA);
 
   onPrimary(): void {
     this.dialogRef.close({ action: 'primary' } as SuccessDialogResult);
