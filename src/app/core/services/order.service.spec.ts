@@ -64,6 +64,6 @@ describe('OrderService', () => {
     httpMock.expectOne(req => req.url === `${apiUrl}/1/cancelar`).flush({});
 
     service.delete(1).subscribe();
-    httpMock.expectOne(`${apiUrl}/1/cancelar`).flush({});
+    httpMock.expectOne(`${apiUrl}/1/cancelar?reintegrarMateriales=false`).flush({});
   });
 });

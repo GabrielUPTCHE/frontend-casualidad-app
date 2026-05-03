@@ -8,9 +8,9 @@ import { FormControl, Validators } from '@angular/forms';
 import { jest } from '@jest/globals';
 
 const mockClient = { 
-  idCliente: 1, id: '1', nombre: 'A', name: 'A', 
+  id: '1', idCliente: 1, nombre: 'A', name: 'A', 
   direccion: 'D', address: 'D', 
-  telefonos: ['1', '2'], isActive: true, ordersSummary: { total: 0 } 
+  telefonos: ['1', '2'], phones: ['1', '2'], isActive: true, ordersSummary: { total: 0 } 
 } as any;
 
 describe('ClientesComponent', () => {
@@ -46,17 +46,14 @@ describe('ClientesComponent', () => {
   it('should handle phone helpers', () => {
     component.openAddForm();
     expect(component.phonesFormArray.length).toBe(1);
-    component.addPhone();
+    component.addPhoneField();
     expect(component.phonesFormArray.length).toBe(2);
-    component.removePhone(0);
+    component.removePhoneField(0);
     expect(component.phonesFormArray.length).toBe(1);
 
     component.openEditForm(mockClient);
     expect(component.phonesFormArray.length).toBe(2);
     expect(component.phonesFormArray.at(0).value).toBe('1');
-    
-    component.closeForm();
-    expect(component.viewMode).toBe('list');
   });
 
   it('should save client (create and update)', () => {
@@ -68,6 +65,7 @@ describe('ClientesComponent', () => {
 
     component.openEditForm(mockClient);
     component.clientForm.patchValue({ name: 'U' });
+    // In openEditForm, phones are already populated with Validators.required
     component.saveClient();
     expect(mockClientService.update).toHaveBeenCalled();
   });

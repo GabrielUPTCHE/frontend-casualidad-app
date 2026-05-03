@@ -314,7 +314,7 @@ export class InventarioComponent implements OnInit, AfterViewInit {
       productionCost: product.productionCost || product.purchasePrice || 0,
       salePrice: product.salePrice || 0,
       wastePercent: product.wastePercent || 0
-    });
+    }, { emitEvent: false });
 
     this.componentsFormArray.clear();
     if (product.composition && product.composition.length > 0) {
@@ -326,8 +326,8 @@ export class InventarioComponent implements OnInit, AfterViewInit {
       });
     }
 
-    this.inventoryForm.get('stock')?.disable();
-    this.inventoryForm.get('type')?.disable();
+    this.inventoryForm.get('stock')?.disable({ emitEvent: false });
+    this.inventoryForm.get('type')?.disable({ emitEvent: false });
     this.viewMode = 'edit';
     this.cdr.detectChanges();
   }
