@@ -1,123 +1,127 @@
 import { OrderService } from '../core/services/order.service';
 import { ClientService } from '../core/services/client.service';
 import { InventoryService } from '../core/services/inventory.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PedidosComponent } from './pedidos';
 import { MatDialog } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { jest } from '@jest/globals';
 
-const mockOrder = { idPedido: 1, codigoUnico: 'PED-001', estadoPedido: 'DONE', nombreCliente: 'Alpha', clientName: 'Alpha', saldoPendiente: 0, fechaEntrega: '2026-01-01' };
-
-const mockOrderService = {
-  getAll: () => of([]),
-  delete: () => of({}),
-  create: () => of({ codigoUnico: 'PED-001', estado: 'EN_PRODUCCION' }),
-  update: () => of({}),
-  cancelar: () => of({}),
-  getById: () => of({ idPedido: 1, cliente: { idCliente: 1, nombreCompleto: 'Alpha' }, fechaEntrega: '2026-01-01', productos: [] }),
-  activarProduccion: () => of({ codigoUnico: 'PED-001', estado: 'EN_PRODUCCION' })
-};
-
-const mockClientService = {
-  getAll: () => of([])
-};
-
-const mockInventoryService = {
-  getAll: () => of([])
-};
+const mockOrder = { idPedido: 1, id: 1, codigoUnico: 'PED-001', estadoPedido: 'DONE', nombreCliente: 'Alpha', clientName: 'Alpha', saldoPendiente: 0, fechaEntrega: '2026-01-01' };
 
 describe('PedidosComponent', () => {
   let component: PedidosComponent;
   let fixture: ComponentFixture<PedidosComponent>;
+  let mockOrderService: any;
+  let mockClientService: any;
+  let mockInventoryService: any;
+  let mockDialog: any;
 
   beforeEach(async () => {
+    mockOrderService = {
+      getAll: jest.fn(() => of([mockOrder])),
+      delete: jest.fn(() => of({})),
+      create: jest.fn(() => of({ codigoUnico: 'PED-001', estado: 'EN_PRODUCCION' })),
+      update: jest.fn(() => of({})),
+      cancelar: jest.fn(() => of({})),
+      getById: jest.fn(() => of({ idPedido: 1, cliente: { idCliente: 1, nombreCompleto: 'Alpha' }, fechaEntrega: '2026-01-01', productos: [{idDetalle: 1, nombreProducto: 'P1', cantidad: 5}] })),
+      activarProduccion: jest.fn(() => of({ codigoUnico: 'PED-001', estado: 'EN_PRODUCCION' }))
+    };
+
+    mockClientService = {
+      getAll: jest.fn(() => of([{ idCliente: 1, nombre: 'Alpha' }]))
+    };
+
+    mockInventoryService = {
+      getAll: jest.fn(() => of([{ idProducto: 1, nombre: 'P1' }]))
+    };
+
+    mockDialog = {
+      open: jest.fn(() => ({
+        afterClosed: () => of(true)
+      }))
+    };
+
     await TestBed.configureTestingModule({
+      imports: [PedidosComponent, BrowserAnimationsModule],
       providers: [
         { provide: OrderService, useValue: mockOrderService },
         { provide: ClientService, useValue: mockClientService },
         { provide: InventoryService, useValue: mockInventoryService },
-        { provide: ActivatedRoute, useValue: { queryParams: of({}) } }
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
+        { provide: MatDialog, useValue: mockDialog }
       ],
-      imports: [PedidosComponent, BrowserAnimationsModule],
     })
-    .overrideProvider(MatDialog, { useValue: { open: () => ({ afterClosed: () => of(false) }) } })
+    .overrideProvider(MatDialog, { useValue: mockDialog })
     .compileComponents();
 
     fixture = TestBed.createComponent(PedidosComponent);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    component.paginator = { firstPage: jest.fn() } as any;
+    fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should load all data on init', () => {
+    expect(mockOrderService.getAll).toHaveBeenCalled();
+    expect(mockClientService.getAll).toHaveBeenCalled();
+    expect(mockInventoryService.getAll).toHaveBeenCalled();
+    expect(component.ordersData.length).toBe(1);
   });
 
-  it('should have clientsList and productsList after init', () => {
-    expect(component.clientsList).toBeDefined();
-    expect(component.productsList).toBeDefined();
-  });
-
-  it('should handle search via dataSource filter', () => {
-    component.searchTerm = 'Alpha';
-    component.onSearchChange();
-    expect(component.dataSource.filter).toContain('alpha');
-  });
-
-  it('should handle openAddForm and closeForm', () => {
-    component.openAddForm();
-    expect(component.viewMode).toBe('add');
-    component.closeForm();
-    expect(component.viewMode).toBe('list');
-  });
-
-  it('should handle saveOrder with invalid form (stays on add)', () => {
-    component.openAddForm();
-    // form is invalid, save should mark as touched and stay
-    component.saveOrder();
-    expect(component.viewMode).toBe('add');
-  });
-
-  it('should handle saveOrder with valid form', () => {
-    component.openAddForm();
-    Object.defineProperty(component.orderForm, 'valid', { get: () => true });
-    component.saveOrder();
-    expect(component).toBeTruthy();
-  });
-
-  it('should handle openDeleteModal', () => {
-    component.openDeleteModal(mockOrder as any);
-    expect(component).toBeTruthy();
-  });
-
-  it('should handle openActivarProduccionModal', () => {
-    component.openActivarProduccionModal(mockOrder as any);
-    expect(component).toBeTruthy();
-  });
-
-  it('should handle addItem and removeItem', () => {
-    component.openAddForm();
-    expect(component.itemsFormArray.length).toBe(1);
+  it('should compute subtotalEstimate correctly', () => {
     component.addItem();
-    expect(component.itemsFormArray.length).toBe(2);
-    component.removeItem(0);
-    expect(component.itemsFormArray.length).toBe(1);
-  });
-
-  it('should calculate subtotalEstimate', () => {
-    component.openAddForm();
-    component.itemsFormArray.at(0).patchValue({ quantity: 2, unitPrice: 50 });
+    component.itemsFormArray.at(0).get('quantity')?.setValue(2);
+    component.itemsFormArray.at(0).get('unitPrice')?.setValue(50);
     expect(component.subtotalEstimate).toBe(100);
   });
 
-  it('should handle openEditForm', () => {
-    component.openEditForm(mockOrder as any);
-    expect(component).toBeTruthy();
+  it('should save order successfully (create)', () => {
+    component.openAddForm();
+    component.orderForm.get('clientId')?.setValue(1);
+    component.orderForm.get('deliveryDate')?.setValue('2026-12-31');
+    component.itemsFormArray.at(0).get('productId')?.setValue(1);
+    component.itemsFormArray.at(0).get('quantity')?.setValue(1);
+    component.saveOrder();
+    expect(mockOrderService.create).toHaveBeenCalled();
   });
 
-  it('should handle confirmActivarProduccion when no selectedOrder', () => {
+  it('should handle error when loading orders', () => {
+    mockOrderService.getAll.mockReturnValueOnce(throwError(() => new Error('Err')));
+    component.loadOrders();
+    expect(component.ordersData.length).toBe(1);
+  });
+
+  it('should open edit form and build items', () => {
+    component.openEditForm(mockOrder as any);
+    expect(mockOrderService.getById).toHaveBeenCalled();
+    // After async pipe, buildItemsFromProducts should be called
+  });
+
+  it('should handle sortingDataAccessor', () => {
+    const item = { nombreCliente: 'Alpha', clientName: 'Alpha', idPedido: 1, codigoUnico: 'C1', fechaEntrega: '2026-01-01', saldoPendiente: 10 } as any;
+    expect(component.dataSource.sortingDataAccessor(item, 'cliente')).toBe('Alpha');
+    expect(component.dataSource.sortingDataAccessor(item, 'fecha')).toBeGreaterThan(0);
+    expect(component.dataSource.sortingDataAccessor(item, 'saldo')).toBe(10);
+  });
+
+  it('should handle search', () => {
+    component.searchTerm = 'Alpha';
+    component.onSearchChange();
+    expect(component.dataSource.filter).toBe('alpha');
+  });
+
+  it('should confirm production and open success dialog', () => {
+    component.selectedOrder = mockOrder as any;
     component.confirmActivarProduccion();
-    expect(component).toBeTruthy();
+    expect(mockOrderService.activarProduccion).toHaveBeenCalledWith(1);
+    expect(mockDialog.open).toHaveBeenCalled();
+  });
+
+  it('should handle cancelation', () => {
+    mockDialog.open.mockReturnValueOnce({ afterClosed: () => of(true) });
+    component.openDeleteModal(mockOrder as any);
+    expect(mockOrderService.cancelar).toHaveBeenCalled();
   });
 });

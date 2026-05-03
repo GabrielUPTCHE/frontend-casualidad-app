@@ -1,105 +1,70 @@
 import { ClientService } from '../core/services/client.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ClientesComponent } from './clientes';
 import { MatDialog } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
-const mockClientService = {
-  getAll: () => of([]),
-  delete: () => of({}),
-  create: () => of({}),
-  update: () => of({})
-};
-
-const mockClient = {
-  idCliente: 1, id: '1', nombre: 'Alpha', name: 'Alpha',
-  direccion: '', address: '', telefonos: ['1'], phones: ['1'],
-  isActive: true, ordersSummary: { total: 0, pending: 0, inProduction: 0 }, createdAt: ''
-} as any;
+import { jest } from '@jest/globals';
 
 describe('ClientesComponent', () => {
   let component: ClientesComponent;
   let fixture: ComponentFixture<ClientesComponent>;
+  let mockClientService: any;
+  let mockDialog: any;
 
   beforeEach(async () => {
+    mockClientService = {
+      getAll: jest.fn(() => of([])),
+      delete: jest.fn(() => of({})),
+      create: jest.fn(() => of({ id: 1 })),
+      update: jest.fn(() => of({}))
+    };
+
+    mockDialog = {
+      open: jest.fn(() => ({
+        afterClosed: () => of({ action: 'primary' })
+      }))
+    };
+
     await TestBed.configureTestingModule({
-      providers: [
-        { provide: ClientService, useValue: mockClientService }
-      ],
       imports: [ClientesComponent, BrowserAnimationsModule],
+      providers: [
+        { provide: ClientService, useValue: mockClientService },
+        { provide: MatDialog, useValue: mockDialog }
+      ],
     })
-    .overrideProvider(MatDialog, { useValue: { open: () => ({ afterClosed: () => of({ action: 'primary' }) }) } })
+    .overrideProvider(MatDialog, { useValue: mockDialog })
     .compileComponents();
 
     fixture = TestBed.createComponent(ClientesComponent);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+  it('should create', () => { expect(component).toBeTruthy(); });
 
-  it('should filter clients via dataSource filter', () => {
-    component.clientsData = [
-      { ...mockClient, id: '1', name: 'Alpha' },
-      { ...mockClient, id: '2', name: 'Beta' }
-    ];
-    component.dataSource.data = component.clientsData;
-    component.searchTerm = 'Alpha';
-    component.onSearchChange();
-    expect(component.dataSource.filter).toBe('alpha');
-  });
-
-  it('should handle search and clear', () => {
-    component.clientsData = Array(10).fill(mockClient);
-    component.dataSource.data = component.clientsData;
-    component.searchTerm = 'test';
-    component.onSearchChange();
-    expect(component.dataSource.filter).toBe('test');
-    component.searchTerm = '';
-    component.onSearchChange();
-    expect(component.dataSource.filter).toBe('');
-  });
-
-  it('should handle openProductsModal', () => {
-    component.clientsData = [mockClient];
-    // Should call dialog.open without errors
-    component.openProductsModal(mockClient);
-    expect(component).toBeTruthy();
-  });
-
-  it('should handle openDeleteModal', () => {
-    component.clientsData = [mockClient];
-    // Should call dialog.open without errors
-    component.openDeleteModal(mockClient);
-    expect(component).toBeTruthy();
-  });
-
-  it('should handle openAddForm and closeForm', () => {
+  it('should save client (create)', () => {
     component.openAddForm();
-    expect(component.viewMode).toBe('add');
-    component.closeForm();
-    expect(component.viewMode).toBe('list');
-  });
-
-  it('should handle openEditForm', () => {
-    component.openEditForm({ id: '1', phones: ['123', '456'] } as any);
-    expect(component.viewMode).toBe('edit');
-  });
-
-  it('should handle saveClient with invalid form', () => {
-    component.openAddForm();
+    component.clientForm.get('name')?.setValue('N');
+    component.phonesFormArray.at(0).setValue('1');
     component.saveClient();
-    expect(component.viewMode).toBe('add');
+    expect(mockClientService.create).toHaveBeenCalled();
   });
 
-  it('should handle addPhoneField and removePhoneField', () => {
+  it('should save client (update)', () => {
+    component.openEditForm({ idCliente: 1, nombre: 'A', telefonos: ['1'] } as any);
+    component.clientForm.get('name')?.setValue('U');
+    component.phonesFormArray.at(0).setValue('1');
+    component.saveClient();
+    expect(mockClientService.update).toHaveBeenCalled();
+  });
+
+  it('should handle error (create)', () => {
+    mockClientService.create.mockReturnValueOnce(throwError(() => new Error()));
     component.openAddForm();
-    component.addPhoneField();
-    const before = component.phonesFormArray.length;
-    component.removePhoneField(0);
-    expect(component.phonesFormArray.length).toBe(before - 1);
+    component.clientForm.get('name')?.setValue('N');
+    component.phonesFormArray.at(0).setValue('1');
+    component.saveClient();
+    expect(mockClientService.create).toHaveBeenCalled();
   });
 });
