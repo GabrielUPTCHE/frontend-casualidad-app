@@ -5,6 +5,8 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PaginationComponent } from '../shared/pagination/pagination';
 import { PaymentService } from '../core/services/payment.service';
+import { PaymentListItemDTO } from '../core/models/payment.dto';
+import { Observable } from 'rxjs';
 
 /** Shape normalizada para la tabla — compatible con el HTML existente */
 interface PaymentRow {
@@ -12,8 +14,8 @@ interface PaymentRow {
   orderId: string;      // codigoPedido
   clientName: string;
   amount: number;       // saldoPendiente
-  type: 'CASH' | 'TRANSFER';
-  status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
+  type: 'EFECTIVO' | 'TRANSFERENCIA';
+  status: 'TERMINADO' | 'PENDIENTE' | 'CANCELADO' | 'EN_PRODUCCION';
   createdAt: string;    // fechaEntrega como ISO string
   voucherUrl: string | null;
   registeredBy: { id: string; name: string };
@@ -22,8 +24,8 @@ interface PaymentRow {
   idPedido: number;
 }
 
-type PaymentStatus = 'COMPLETED' | 'PENDING' | 'CANCELLED';
-type PaymentType   = 'CASH' | 'TRANSFER';
+export type PaymentStatus = 'TERMINADO' | 'PENDIENTE' | 'CANCELADO' | 'EN_PRODUCCION';
+export type PaymentType   = 'EFECTIVO' | 'TRANSFERENCIA';
 
 @Component({
   selector: 'app-pagos',
@@ -36,8 +38,11 @@ export class PagosComponent implements OnInit {
 
   // ─── Estado principal ─────────────────────────────────────────────────────
   paymentsData:     PaymentRow[] = [];
-  filteredPayments: PaymentRow[] = [];
-  paginatedPayments: PaymentRow[] = [];
+  paymentsListed: PaymentListItemDTO[] = [];
+  filteredPayments: PaymentListItemDTO[] = [];
+  paginatedPayments: PaymentListItemDTO[]  = [];
+  totalElements = 0;
+  totalPages = 0;
 
   searchTerm    = '';
   currentFilter: 'ALL' | PaymentStatus = 'ALL';
@@ -47,9 +52,10 @@ export class PagosComponent implements OnInit {
 
   // ─── Mapas de UI ──────────────────────────────────────────────────────────
   statusMap: Record<PaymentStatus, { text: string; css: string }> = {
-    'COMPLETED': { text: 'Completado',  css: 'bg-green-100 text-green-700' },
-    'PENDING':   { text: 'Pendiente',   css: 'bg-orange-100 text-orange-700' },
-    'CANCELLED': { text: 'Cancelado',   css: 'bg-red-100 text-red-700' }
+    'TERMINADO': { text: 'Completado',  css: 'bg-green-100 text-green-700' },
+    'EN_PRODUCCION': { text: 'En Producción',  css: 'bg-blue-100 text-blue-700' },
+    'PENDIENTE':   { text: 'Pendiente',   css: 'bg-orange-100 text-orange-700' },
+    'CANCELADO': { text: 'Cancelado',   css: 'bg-red-100 text-red-700' }
   };
 
   typeMap: Record<string, { text: string; icon: string }> = {
@@ -65,7 +71,7 @@ export class PagosComponent implements OnInit {
   showSuccessModal     = false;
   showViewModal        = false;
   showFormSuccessModal = false;
-  selectedPayment: PaymentRow | null = null;
+  selectedPayment: PaymentListItemDTO | null = null;
 
   // ─── Formulario ───────────────────────────────────────────────────────────
   viewMode: 'list' | 'add' | 'edit' = 'list';
@@ -76,9 +82,9 @@ export class PagosComponent implements OnInit {
 
   // ─── Computed ─────────────────────────────────────────────────────────────
   get totalMonthlyBalance(): number {
-    return this.paymentsData
-      .filter(p => p.status === 'PENDING')
-      .reduce((acc, p) => acc + (p.amount ?? 0), 0);
+    return this.paymentsListed
+      .filter(p => p.estadoPedido === 'PENDIENTE')
+      .reduce((acc, p) => acc + (p.monto ?? 0), 0);
   }
 
   private readonly fb           = inject(FormBuilder);
@@ -99,6 +105,22 @@ export class PagosComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPayments();
+    this.fetchPayments();
+  }
+
+
+  fetchPayments(): void {
+    this.paymentService.getPayments((this.currentPage -1), this.pageSize).subscribe({
+      next: (response) => {
+        this.paymentsListed = response.data;
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error fetching payments from the backend', err);
+      }
+    });
   }
 
   // ─── Carga ────────────────────────────────────────────────────────────────
@@ -115,8 +137,8 @@ export class PagosComponent implements OnInit {
             orderId:       s.codigoPedido ?? String(s.idPedido),
             clientName:    s.nombreCliente ?? 'Desconocido',
             amount:        Number(s.saldoPendiente) || 0,
-            type:          'CASH' as PaymentType,
-            status:        'PENDING' as PaymentStatus,
+            type:          'EFECTIVO' as PaymentType,
+            status:        'PENDIENTE' as PaymentStatus,
             createdAt:     s.fechaEntrega ?? new Date().toISOString(),
             voucherUrl:    null,
             registeredBy:  { id: '', name: 'N/A' },
@@ -146,7 +168,8 @@ export class PagosComponent implements OnInit {
 
   onPageChange(page: number): void {
     this.currentPage = page;
-    this.applyFilters();
+    this.fetchPayments();
+
   }
 
   handleSort(column: string): void {
@@ -159,18 +182,19 @@ export class PagosComponent implements OnInit {
   }
 
   applyFilters(): void {
-    let result = [...this.paymentsData];
+    // Para asegurar que tenemos datos actualizados antes de filtrar
 
-    if (this.currentFilter !== 'ALL') {
-      result = result.filter(p => p.status === this.currentFilter);
+
+    /* if (this.currentFilter !== 'ALL') {
+      result = result.filter(p => p.estadoPedido === this.currentFilter);
     }
 
     if (this.searchTerm.trim() !== '') {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(p =>
-        p.id.toLowerCase().includes(term) ||
-        (p.clientName?.toLowerCase().includes(term)) ||
-        p.orderId.toLowerCase().includes(term)
+        p.idPago.toString().toLowerCase().includes(term) ||
+        (p.nombreCliente?.toLowerCase().includes(term)) ||
+        p.idPago.toString().toLowerCase().includes(term)
       );
     }
 
@@ -184,12 +208,12 @@ export class PagosComponent implements OnInit {
     if (this.paginatedPayments.length === 0 && this.currentPage > 1) {
       this.currentPage = 1;
       this.applyFilters();
-    }
+    } */
   }
 
   // ─── Modals de vista ─────────────────────────────────────────────────────
 
-  openViewModal(payment: PaymentRow): void {
+  openViewModal(payment: PaymentListItemDTO): void {
     this.selectedPayment = payment;
     this.showViewModal   = true;
     this.cdr.detectChanges();
@@ -203,7 +227,7 @@ export class PagosComponent implements OnInit {
 
   // ─── Eliminar ────────────────────────────────────────────────────────────
 
-  openDeleteModal(payment: PaymentRow): void {
+  openDeleteModal(payment: PaymentListItemDTO): void {
     this.selectedPayment = payment;
     this.showDeleteModal = true;
     this.cdr.detectChanges();
@@ -217,13 +241,21 @@ export class PagosComponent implements OnInit {
 
   confirmDelete(): void {
     if (!this.selectedPayment) { return; }
+    this.paymentService.eliminarAbono(this.selectedPayment.idPedido, this.selectedPayment.idPago).subscribe({
+      next: () => {
+         console.warn('Para eliminar un abono específico, usa la vista de detalle del pedido.');
+        this.closeDeleteModal();
+        this.showSuccessModal = true;
+        this.loadPayments();
+        this.fetchPayments();
+        this.cdr.detectChanges();
+
+      }
+    });
     // El backend requiere idPedido + idPago. Como aquí solo tenemos el saldo
     // (no un pago individual), llamamos a getSaldosPendientes para refrescar.
     // Si se quiere eliminar un abono específico usar openDeleteAbonoModal(saldo, abono).
-    console.warn('Para eliminar un abono específico, usa la vista de detalle del pedido.');
-    this.closeDeleteModal();
-    this.showSuccessModal = true;
-    this.cdr.detectChanges();
+
   }
 
   closeSuccessModal(): void {
@@ -246,13 +278,13 @@ export class PagosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  openEditForm(payment: PaymentRow): void {
+  openEditForm(payment: PaymentListItemDTO): void {
     this.selectedPayment = payment;
     this.paymentForm.patchValue({
-      id:                    payment.id,
+      id:                    payment.idPago,
       idPedido:              payment.idPedido,
-      amount:                payment.amount,
-      type:                  this.mapPaymentType(payment.type),
+      amount:                payment.monto,
+      type:                  this.mapPaymentType(payment.metodoPago),
       referenciaComprobante: ''
     });
     this.viewMode = 'edit';
@@ -271,21 +303,28 @@ export class PagosComponent implements OnInit {
       return;
     }
 
-    const { idPedido, amount, type, referenciaComprobante } = this.paymentForm.value;
+    const { id,idPedido, amount, type, referenciaComprobante } = this.paymentForm.value;
     // El backend acepta: { monto, metodoPago: EFECTIVO|TRANSFERENCIA, referenciaComprobante? }
     const payload = {
       monto:                Number(amount),
       metodoPago:           type as 'EFECTIVO' | 'TRANSFERENCIA',
       referenciaComprobante: referenciaComprobante || undefined
     };
+    let request$ ={} as Observable<any>;
+    if (this.viewMode === 'edit' && id) {
+       request$ = this.paymentService.editarAbono(Number(idPedido), Number(id), payload);
+    }
+    if (this.viewMode === 'add' && idPedido) {
+        request$ = this.paymentService.registrarAbono(Number(idPedido), payload);
+    }
 
-    const request$ = this.paymentService.registrarAbono(Number(idPedido), payload);
 
     request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.showFormSuccessModal = true;
         this.cdr.detectChanges();
         this.loadPayments();
+        this.fetchPayments();
       },
       error: (err: unknown) => console.error('Error guardando abono', err)
     });
