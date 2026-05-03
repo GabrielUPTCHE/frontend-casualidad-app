@@ -146,8 +146,9 @@ export class InventarioComponent implements OnInit, AfterViewInit {
       }
     };
 
-    this.dataSource.filterPredicate = (data, filter) => {
-      const matchesSearch = data.name.toLowerCase().includes(filter) || data.id.toLowerCase().includes(filter);
+    this.dataSource.filterPredicate = (data, _filter) => {
+      const search = this.searchTerm.trim().toLowerCase();
+      const matchesSearch = data.name.toLowerCase().includes(search) || data.id.toLowerCase().includes(search);
       const matchesCategory = this.currentFilter !== 'category' || !this.selectedCategory || data.type === this.selectedCategory;
       const matchesLowStock = this.currentFilter !== 'lowstock' || data.isLowStock;
       return matchesSearch && matchesCategory && matchesLowStock;
