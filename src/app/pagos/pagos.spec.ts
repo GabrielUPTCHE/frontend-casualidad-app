@@ -28,7 +28,8 @@ describe('PagosComponent', () => {
         totalPages: 1,
         data: []
       })),
-      eliminarAbono: jest.fn(() => of({}))
+      eliminarAbono: jest.fn(() => of({})),
+      editarAbono: jest.fn(() => of({}))
     };
 
     await TestBed.configureTestingModule({
@@ -154,4 +155,45 @@ describe('PagosComponent', () => {
     component.closeViewModal();
     expect(component.showViewModal).toBe(false);
   });
+  it('debería actualizar currentPage y llamar a fetchPayments', () => {
+      const mockPage = 2;
+      const fetchPaymentsSpy = jest.spyOn(component, 'fetchPayments').mockImplementation(() => {});
+      component.onPageChange(mockPage);
+      expect(component.currentPage).toBe(mockPage);
+      expect(fetchPaymentsSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('debería llamar a editarAbono cuando viewMode es "edit" y el id existe', () => {
+      component.viewMode = 'edit';
+
+      component.paymentForm.setValue({
+        id: 10,                 // Obligatorio para entrar al if de editar
+        idPedido: 50,           // Obligatorio
+        amount: 250.50,         // Para que sea válido (mayor a 0)
+        type: 'TRANSFERENCIA',  // Para el payload
+        referenciaComprobante: 'REF-123'
+      });
+
+      const payloadEsperado = {
+        monto: 250.50,
+        metodoPago: 'TRANSFERENCIA',
+        referenciaComprobante: 'REF-123'
+      };
+
+      const editarAbonoSpy = jest
+        .spyOn(component['paymentService'], 'editarAbono')
+        .mockReturnValue(of({}));
+
+      // Opcional: Mockeamos los métodos de recarga para aislar la prueba
+      jest.spyOn(component, 'loadPayments').mockImplementation(() => {});
+      jest.spyOn(component, 'fetchPayments').mockImplementation(() => {});
+
+      // 2. Act (Actuar)
+      component.savePayment();
+
+      // 3. Assert (Afirmar)
+      expect(editarAbonoSpy).toHaveBeenCalledTimes(1);
+      // Validamos que se llamó con Number(idPedido), Number(id) y el payload correcto
+      expect(editarAbonoSpy).toHaveBeenCalledWith(50, 10, payloadEsperado);
+    });
 });
