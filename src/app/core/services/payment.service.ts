@@ -48,7 +48,6 @@ export class PaymentService {
     metodoPago: 'EFECTIVO' | 'TRANSFERENCIA';
     referenciaComprobante?: string;
   }): Observable<any> {
-    console.log(`Editando abono ${idPago} del pedido ${idPedido} con datos:`, data);
     return this.http.put<any>(`${this.abonosBase}/${idPedido}/abonos/${idPago}`, data);
   }
 

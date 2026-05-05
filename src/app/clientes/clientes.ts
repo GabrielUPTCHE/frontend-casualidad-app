@@ -21,6 +21,7 @@ import { SuccessDialogComponent } from '../shared/components/success-dialog/succ
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog';
 import { ClientProductsDialogComponent } from './components/client-products-dialog/client-products-dialog';
 import { ListHelper } from '../shared/utils/list-helper';
+import { BaseTableComponent } from '../shared/components/base-table.component';
 @Component({
   selector: 'app-clientes',
   standalone: true,
@@ -41,14 +42,10 @@ import { ListHelper } from '../shared/utils/list-helper';
   templateUrl: './clientes.html',
   styleUrls: ['./clientes.css']
 })
-export class ClientesComponent implements OnInit, AfterViewInit {
+export class ClientesComponent extends BaseTableComponent<ClientDTO> implements OnInit, AfterViewInit {
   clientsData: ClientDTO[] = [];
   dataSource = new MatTableDataSource<ClientDTO>([]);
   displayedColumns: string[] = ['id', 'name', 'pedidos', 'isActive', 'acciones'];
-
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-
   searchTerm = '';
 
   // Modals state
@@ -72,6 +69,7 @@ export class ClientesComponent implements OnInit, AfterViewInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   constructor() {
+    super();
     this.breakpointObserver.observe([Breakpoints.Handset, Breakpoints.TabletPortrait]).subscribe(result => {
       this.isMobile = result.matches;
       this.cdr.markForCheck();
@@ -110,12 +108,7 @@ export class ClientesComponent implements OnInit, AfterViewInit {
     });
   }
 
-
-
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-
     this.dataSource.sortingDataAccessor = (item: ClientDTO, property: string) => {
       switch (property) {
         case 'name': return item.name.toLowerCase();
@@ -206,8 +199,6 @@ export class ClientesComponent implements OnInit, AfterViewInit {
     });
   }
 
-
-
   // --- FORM ACTIONS ---
   openAddForm(): void {
     this.errorMessage = null;
@@ -240,7 +231,7 @@ export class ClientesComponent implements OnInit, AfterViewInit {
 
   closeForm(): void {
     this.viewMode = 'list';
-    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
+    this.cdr.detectChanges();
   }
 
   saveClient(): void {
@@ -275,7 +266,6 @@ export class ClientesComponent implements OnInit, AfterViewInit {
 
             if (!result || result.action === 'primary' || result.action === 'close') {
               this.viewMode = 'list';
-              ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
             } else if (result.action === 'secondary' && !isEdit) {
               this.openAddForm();
             }

@@ -21,6 +21,7 @@ import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/conf
 import { EntradaDialogComponent } from './components/entrada-dialog/entrada-dialog';
 import { AjusteDialogComponent } from './components/ajuste-dialog/ajuste-dialog';
 import { ListHelper } from '../shared/utils/list-helper';
+import { BaseTableComponent } from '../shared/components/base-table.component';
 
 @Component({
   selector: 'app-inventario',
@@ -42,13 +43,10 @@ import { ListHelper } from '../shared/utils/list-helper';
   templateUrl: './inventario.html',
   styleUrls: ['./inventario.css']
 })
-export class InventarioComponent implements OnInit, AfterViewInit {
+export class InventarioComponent extends BaseTableComponent<ProductDTO> implements OnInit, AfterViewInit {
   productsData: ProductDTO[] = [];
   dataSource = new MatTableDataSource<ProductDTO>([]);
   displayedColumns: string[] = ['id', 'name', 'type', 'stock', 'estado', 'acciones'];
-
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
 
   searchTerm = '';
   currentFilter: 'all' | 'lowstock' | 'category' = 'all';
@@ -81,6 +79,7 @@ export class InventarioComponent implements OnInit, AfterViewInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   constructor() {
+    super();
     this.breakpointObserver.observe([Breakpoints.Handset, Breakpoints.TabletPortrait]).subscribe(result => {
       this.isMobile = result.matches;
       this.cdr.markForCheck();
@@ -144,9 +143,6 @@ export class InventarioComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-
     this.dataSource.sortingDataAccessor = (item: ProductDTO, property: string) => {
       switch (property) {
         case 'name': return item.name.toLowerCase();
@@ -358,7 +354,7 @@ export class InventarioComponent implements OnInit, AfterViewInit {
 
   closeForm(): void {
     this.viewMode = 'list';
-    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
+    this.cdr.detectChanges();
   }
 
   saveProduct(): void {
@@ -390,7 +386,6 @@ export class InventarioComponent implements OnInit, AfterViewInit {
       dialogRef.afterClosed().subscribe(result => {
         if (!result || result.action === 'primary' || result.action === 'close') {
           this.viewMode = 'list';
-          ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
         } else if (result.action === 'secondary' && !isEdit) {
           this.openAddForm();
         }

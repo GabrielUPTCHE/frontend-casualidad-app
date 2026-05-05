@@ -6,7 +6,7 @@ import { ClientService } from '../core/services/client.service';
 import { InventoryService } from '../core/services/inventory.service';
 import { MatDialog } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { OrderSummaryDTO } from '../core/models/order.dto';
 
@@ -49,6 +49,7 @@ describe('PedidosComponent', () => {
   let mockClientService: jest.Mocked<Partial<ClientService>>;
   let mockInventoryService: jest.Mocked<Partial<InventoryService>>;
   let mockDialog: { open: jest.Mock };
+  let mockRouter: { navigate: jest.Mock };
 
   const setupTestBed = async (queryParams: any = {}) => {
     mockOrderService = {
@@ -58,6 +59,9 @@ describe('PedidosComponent', () => {
       cancelar: jest.fn(() => of({})),
       getById: jest.fn(() => of(makeOrderDetail())),
       activarProduccion: jest.fn(() => of({ codigoUnico: 'COD-123' })),
+      setOrderDraft: jest.fn(),
+      getOrderDraft: jest.fn(() => null),
+      clearOrderDraft: jest.fn(),
     };
     mockClientService = {
       getAll: jest.fn(() => of([{ id: 10, name: 'Alpha', idCliente: 10, nombre: 'Alpha' }])),
@@ -66,6 +70,7 @@ describe('PedidosComponent', () => {
       getAll: jest.fn(() => of([{ id: 1, name: 'P1', idProducto: 1, nombre: 'P1', salePrice: 100 }])),
     };
     mockDialog = { open: jest.fn(() => dialogRefStub(true)) };
+    mockRouter = { navigate: jest.fn() };
 
     await TestBed.configureTestingModule({
       imports: [PedidosComponent, BrowserAnimationsModule],
@@ -75,8 +80,10 @@ describe('PedidosComponent', () => {
         { provide: InventoryService, useValue: mockInventoryService },
         { provide: ActivatedRoute, useValue: { queryParams: of(queryParams) } },
         { provide: MatDialog, useValue: mockDialog },
+        { provide: Router, useValue: mockRouter },
       ],
     }).overrideProvider(MatDialog, { useValue: mockDialog })
+      .overrideProvider(Router, { useValue: mockRouter })
       .compileComponents();
 
     fixture = TestBed.createComponent(PedidosComponent);
@@ -313,6 +320,7 @@ describe('PedidosComponent', () => {
   it('openAddForm should switch to add mode', () => {
     component.openAddForm();
     expect(component.viewMode).toBe('add');
+    expect(mockOrderService.clearOrderDraft).toHaveBeenCalled();
   });
 
   it('openAddForm should clear items and add one default item', () => {
@@ -331,20 +339,24 @@ describe('PedidosComponent', () => {
 
   // ── closeForm ─────────────────────────────────────────────────────────────
 
-  it('closeForm should return to list mode', () => {
+  it('closeForm should return to list mode and clear everything', () => {
     component.viewMode = 'add';
     component.closeForm();
     expect(component.viewMode).toBe('list');
+    expect(mockOrderService.clearOrderDraft).toHaveBeenCalled();
   });
 
   // ── openEditForm ──────────────────────────────────────────────────────────
 
-  it('openEditForm should skip when order has no id', () => {
-    component.openEditForm({ idPedido: undefined, id: undefined } as any);
+  it('openEditForm should skip and show dialog when order is finished/cancelled', () => {
+    component.openEditForm(makeOrder({ estadoPedido: 'TERMINADO' }));
+    expect(mockDialog.open).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      data: expect.objectContaining({ title: 'Acción No Permitida' })
+    }));
     expect(mockOrderService.getById).not.toHaveBeenCalled();
   });
 
-  it('openEditForm should call getById and populate form', async () => {
+  it('openEditForm should call getById and populate form for editable order', async () => {
     component.clientsList = [{ id: 10, nombre: 'Alpha' }];
     component.openEditForm(makeOrder());
     await new Promise(r => setTimeout(r, 10));
@@ -367,6 +379,42 @@ describe('PedidosComponent', () => {
     component.openEditForm(makeOrder());
     await new Promise(r => setTimeout(r, 10));
     expect(component.itemsFormArray.length).toBe(1);
+  });
+
+  it('crearCliente should save draft and navigate', () => {
+    component.orderForm.patchValue({ specifications: 'Draft Test' });
+    component.crearCliente();
+    expect(mockOrderService.setOrderDraft).toHaveBeenCalledWith(expect.objectContaining({ specifications: 'Draft Test' }));
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/clientes'], expect.anything());
+  });
+
+  it('ngOnInit should restore draft if exists and new=true', async () => {
+    const draft = { specifications: 'Restored Draft', items: [] };
+    
+    // Setup test bed with query params
+    TestBed.resetTestingModule();
+    await setupTestBed({ new: 'true' });
+    
+    // Manually set mock return and trigger logic
+    (mockOrderService.getOrderDraft as jest.Mock).mockReturnValue(draft);
+    component.ngOnInit(); // Trigger again with the mock active
+    
+    expect(component.viewMode).toBe('add');
+    expect(component.orderForm.get('specifications')?.value).toBe('Restored Draft');
+    expect(mockOrderService.clearOrderDraft).toHaveBeenCalled();
+  });
+
+  it('populateOrderForm should reset form before patching', async () => {
+    // Fill form with some "stale" data
+    component.orderForm.patchValue({ id: 999, status: 'STALE' });
+    
+    (mockOrderService.getById as jest.Mock).mockReturnValue(of(makeOrderDetail({ idPedido: 1 })));
+    component.openEditForm(makeOrder({ idPedido: 1, estadoPedido: 'PENDIENTE' }));
+    
+    await new Promise(r => setTimeout(r, 20));
+    
+    expect(component.orderForm.get('id')?.value).toBe(1);
+    expect(component.orderForm.get('status')?.value).not.toBe('STALE');
   });
 
   it('populateOrderForm should use idCliente when cliente is missing', async () => {

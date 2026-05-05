@@ -39,15 +39,15 @@ export interface SuccessDialogResult {
           <div class="absolute inset-0 rounded-full scale-150 blur-xl opacity-20"
             [ngClass]="{
               'bg-primary': data.accentColor === 'primary' || !data.accentColor,
-              'bg-emerald-500': data.accentColor === 'success',
-              'bg-amber-500': data.accentColor === 'warning'
+              'bg-secondary': data.accentColor === 'success',
+              'bg-tertiary': data.accentColor === 'warning'
             }">
           </div>
           <div class="relative w-24 h-24 rounded-full flex items-center justify-center shadow-lg"
             [ngClass]="{
               'bg-gradient-to-br from-primary to-primary-container': data.accentColor === 'primary' || !data.accentColor,
-              'bg-gradient-to-br from-emerald-500 to-emerald-400': data.accentColor === 'success',
-              'bg-gradient-to-br from-amber-500 to-amber-400': data.accentColor === 'warning'
+              'bg-gradient-to-br from-secondary to-secondary-container': data.accentColor === 'success',
+              'bg-gradient-to-br from-tertiary to-tertiary-container': data.accentColor === 'warning'
             }">
             <span class="material-symbols-outlined text-white text-5xl"
               style="font-variation-settings: 'FILL' 1, 'wght' 600">
@@ -79,7 +79,7 @@ export interface SuccessDialogResult {
               class="group relative flex items-center justify-center gap-2 w-full py-4 px-6 font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all overflow-hidden text-white"
               [ngClass]="{
                 'bg-primary shadow-primary/20 hover:opacity-90': data.accentColor === 'success' || data.accentColor === 'primary' || !data.accentColor,
-                'bg-gradient-to-br from-amber-500 to-amber-400 shadow-amber-500/20': data.accentColor === 'warning'
+                'bg-gradient-to-br from-tertiary to-tertiary-container shadow-tertiary/20': data.accentColor === 'warning'
               }">
               <span class="relative z-10">{{ data.primaryActionLabel }}</span>
               <span class="material-symbols-outlined relative z-10 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
@@ -87,7 +87,7 @@ export interface SuccessDialogResult {
           }
           @if (data.secondaryActionLabel) {
             <button (click)="onSecondary()"
-              class="w-full py-4 px-6 bg-stone-100 text-stone-600 font-bold rounded-xl hover:bg-stone-200 active:scale-[0.98] transition-all">
+              class="w-full py-4 px-6 bg-secondary-container text-on-secondary-container font-bold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all">
               {{ data.secondaryActionLabel }}
             </button>
           }

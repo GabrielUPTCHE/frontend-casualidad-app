@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OrderSummaryDTO } from '../core/models/order.dto';
+import { OrderSummaryDTO, OrderDetailDTO, CreateOrderDTO } from '../core/models/order.dto';
 import { OrderService } from '../core/services/order.service';
 import { ClientService } from '../core/services/client.service';
 import { InventoryService } from '../core/services/inventory.service';
@@ -22,6 +22,9 @@ import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/conf
 import { SuccessDialogComponent } from '../shared/components/success-dialog/success-dialog';
 import { STATUS_MAP } from '../shared/constants/ui-constants';
 import { ListHelper } from '../shared/utils/list-helper';
+import { BaseTableComponent } from '../shared/components/base-table.component';
+import { Observable } from 'rxjs';
+
 @Component({
   selector: 'app-pedidos',
   standalone: true,
@@ -42,14 +45,11 @@ import { ListHelper } from '../shared/utils/list-helper';
   templateUrl: './pedidos.html',
   styleUrls: ['./pedidos.css']
 })
-export class PedidosComponent implements OnInit, AfterViewInit {
+export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implements OnInit, AfterViewInit {
   ordersData: OrderSummaryDTO[] = [];
   dataSource = new MatTableDataSource<OrderSummaryDTO>([]);
   displayedColumns: string[] = ['codigo', 'cliente', 'estado', 'fecha', 'saldo', 'acciones'];
 
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
-  
   @ViewChild('formalizePaginator') formalizePaginator?: MatPaginator;
   formalizeDataSource = new MatTableDataSource<any>([]);
 
@@ -71,8 +71,8 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   viewMode: 'list' | 'add' | 'edit' | 'detail' | 'formalize' = 'list';
   orderForm: FormGroup;
   currentOrderClientName = '';
-  selectedOrderDetails: any = null;
-  formalizeList: any[] = [];
+  selectedOrderDetails: OrderDetailDTO | null = null;
+  formalizeList: OrderSummaryDTO[] = [];
   formalizeFilter: 'TODOS' | 'PENDIENTES' | 'PRODUCCION' = 'TODOS';
   totalPendienteFormalizar = 0;
   ordenesCriticas = 0;
@@ -93,6 +93,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   constructor() {
+    super();
     this.breakpointObserver.observe([Breakpoints.Handset, Breakpoints.TabletPortrait]).subscribe(result => {
       this.isMobile = result.matches;
       this.cdr.markForCheck();
@@ -151,15 +152,17 @@ export class PedidosComponent implements OnInit, AfterViewInit {
     // Abrir formulario directamente si viene con ?new=true (desde boton Nuevo Pedido del sidebar)
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       if (params['new'] === 'true') {
-        this.openAddForm();
+        const draft = this.orderService.getOrderDraft();
+        if (draft) {
+          this.restoreDraft(draft);
+        } else {
+          this.openAddForm();
+        }
       }
     });
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-
     this.dataSource.sortingDataAccessor = (item, property) => {
       switch (property) {
         case 'codigo': return item.codigoUnico || item.idPedido || '';
@@ -184,7 +187,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         this.dataSource.data = this.ordersData;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading orders', err)
+      error: (err: any) => console.error('Error loading orders', err)
     });
   }
 
@@ -194,7 +197,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         this.clientsList = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading clients', err)
+      error: (err: any) => console.error('Error loading clients', err)
     });
   }
 
@@ -204,7 +207,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         this.productsList = data;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading products', err)
+      error: (err: any) => console.error('Error loading products', err)
     });
   }
 
@@ -251,7 +254,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
           }
         });
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error activando producci\u00f3n', err);
         this.dialog.open(SuccessDialogComponent, {
           panelClass: 'casualidad-dialog',
@@ -306,7 +309,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
           }
         });
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error eliminando pedido', err);
         this.dialog.open(SuccessDialogComponent, {
           panelClass: 'casualidad-dialog',
@@ -326,9 +329,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
 
   // --- FORM ACTIONS ---
   openAddForm(): void {
-    this.orderForm.get('clientId')?.setValidators([Validators.required]);
-    this.orderForm.get('clientId')?.updateValueAndValidity();
-
+    this.orderService.clearOrderDraft(); // In any normal entry, we clear draft
     this.orderForm.reset({
       deliveryDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0]
     });
@@ -338,12 +339,51 @@ export class PedidosComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
+  private restoreDraft(draft: CreateOrderDTO | any): void {
+    this.orderForm.reset();
+    this.itemsFormArray.clear();
+    
+    // Restore items
+    if (draft.items && draft.items.length > 0) {
+      draft.items.forEach(() => this.addItem());
+    } else {
+      this.addItem();
+    }
+    
+    this.orderForm.patchValue(draft);
+    this.orderService.clearOrderDraft();
+    this.viewMode = 'add';
+    this.cdr.detectChanges();
+  }
+
   crearCliente(): void {
+    // Save current form state as draft
+    this.orderService.setOrderDraft(this.orderForm.getRawValue());
     this.router.navigate(['/clientes'], { queryParams: { from: 'pedidos' } });
   }
 
   openEditForm(order: OrderSummaryDTO): void {
     const id = order.idPedido ?? order.id;
+    const status = order.estadoPedido || order.status;
+    
+    // Validar si el pedido se puede editar
+    if (status === 'TERMINADO' || status === 'DONE' || status === 'DELIVERED' || 
+        status === 'CANCELADO' || status === 'CANCELLED') {
+      this.dialog.open(SuccessDialogComponent, {
+        panelClass: 'casualidad-dialog',
+        data: {
+          title: 'Acción No Permitida',
+          message: `No es posible editar un pedido que se encuentra en estado `,
+          highlightText: (this.statusMap[status]?.text || status).toUpperCase(),
+          message2: '.',
+          icon: 'lock',
+          accentColor: 'warning',
+          primaryActionLabel: 'Entendido'
+        }
+      });
+      return;
+    }
+
     if (!id) return;
 
     this.orderService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -352,7 +392,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         this.viewMode = 'edit';
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading order details', err)
+      error: (err: any) => console.error('Error loading order details', err)
     });
   }
 
@@ -366,7 +406,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         this.viewMode = 'detail';
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error loading order details', err)
+      error: (err: any) => console.error('Error loading order details', err)
     });
   }
 
@@ -424,10 +464,11 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   openEditFromDetail(): void {
     if (this.selectedOrderDetails) {
       // Create a mock OrderSummaryDTO from details to use in openEditForm
-      const orderSummary: any = {
+      const orderSummary: OrderSummaryDTO = {
+        ...this.selectedOrderDetails,
         idPedido: this.selectedOrderDetails.idPedido,
         idCliente: this.selectedOrderDetails.cliente?.idCliente
-      };
+      } as OrderSummaryDTO;
       this.populateOrderForm(this.selectedOrderDetails, orderSummary);
       this.viewMode = 'edit';
       this.cdr.detectChanges();
@@ -440,7 +481,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
     return Math.round((pagado / total) * 100);
   }
 
-  private populateOrderForm(detail: any, order: OrderSummaryDTO): void {
+  private populateOrderForm(detail: OrderDetailDTO, order: OrderSummaryDTO): void {
     const targetClientId = detail.cliente?.idCliente ?? detail.idCliente ?? order.idCliente;
     const targetClientName = detail.cliente?.nombreCompleto ?? order.clientName ?? order.nombreCliente;
     const matchingClient = this.clientsList.find(c => c.id === Number(targetClientId) || c.nombre === targetClientName);
@@ -448,8 +489,9 @@ export class PedidosComponent implements OnInit, AfterViewInit {
     this.currentOrderClientName = targetClientName;
 
     setTimeout(() => {
-      this.orderForm.get('clientId')?.clearValidators();
-      this.orderForm.get('clientId')?.updateValueAndValidity();
+      // RESET BEFORE PATCH - This fixes the 'not cleaning' bug
+      this.orderForm.reset();
+      this.itemsFormArray.clear();
 
       this.orderForm.patchValue({
         id: detail.idPedido || detail.id,
@@ -459,7 +501,6 @@ export class PedidosComponent implements OnInit, AfterViewInit {
         specifications: detail.productos && detail.productos.length > 0 ? detail.productos[0].observaciones : ''
       });
 
-      this.itemsFormArray.clear();
       if (detail.productos && detail.productos.length > 0) {
         this.buildItemsFromProducts(detail.productos);
       } else {
@@ -485,9 +526,12 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   }
 
   closeForm(): void {
+    this.orderForm.reset();
+    this.itemsFormArray.clear();
+    this.orderService.clearOrderDraft();
     this.viewMode = 'list';
     this.selectedOrderDetails = null;
-    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
+    this.cdr.detectChanges();
   }
 
   saveOrder(): void {
@@ -501,13 +545,16 @@ export class PedidosComponent implements OnInit, AfterViewInit {
 
     this.processOrderSpecifications(orderData);
 
-    const request$ = id
+    const request$: Observable<any> = id
       ? this.orderService.update(id, orderData)
       : this.orderService.create(orderData);
 
     request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.handleSaveSuccess(id),
-      error: (err) => console.error('Error saving order', err)
+      next: () => {
+        this.orderService.clearOrderDraft();
+        this.handleSaveSuccess(id);
+      },
+      error: (err: any) => console.error('Error saving order', err)
     });
   }
 
@@ -527,7 +574,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private handleSaveSuccess(id: any): void {
+  private handleSaveSuccess(id: string | number | null): void {
     this.loadOrders();
     const dialogRef = this.dialog.open(SuccessDialogComponent, {
       panelClass: 'casualidad-dialog',

@@ -600,7 +600,7 @@
                             Especificaciones del Pedido</div>
                         <div
                             class="bg-surface-container-lowest p-5 rounded-xl border border-zinc-100 text-sm text-stone-600 leading-relaxed min-h-[80px] whitespace-pre-wrap">
-                            {{ selectedOrderDetails.productos?.[0]?.observaciones || 'No hay especificaciones
+                            {{ selectedOrderDetails.productos[0]?.observaciones || 'No hay especificaciones
                             adicionales.' }}
                         </div>
                     </div>
@@ -657,8 +657,8 @@
                     </div>
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-stone-500">Total Abonado:</span>
-                        <span class="font-bold text-green-600">{{ (selectedOrderDetails.total -
-                            selectedOrderDetails.saldoPendiente) | currency:'USD' }}</span>
+                        <span class="font-bold text-green-600">{{ ((selectedOrderDetails.total ?? 0) -
+                            (selectedOrderDetails.saldoPendiente ?? 0)) | currency:'USD' }}</span>
                     </div>
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-stone-500">Saldo Pendiente:</span>
@@ -669,12 +669,12 @@
                         <div
                             class="flex justify-between text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1.5">
                             <span>Abonado</span>
-                            <span>{{ getPaymentPercentage(selectedOrderDetails.total,
-                                selectedOrderDetails.saldoPendiente) }}%</span>
+                            <span>{{ getPaymentPercentage(selectedOrderDetails.total ?? 0,
+                                selectedOrderDetails.saldoPendiente ?? 0) }}%</span>
                         </div>
                         <div class="w-full bg-zinc-100 rounded-full h-2">
                             <div class="bg-green-500 h-2 rounded-full"
-                                [style.width.%]="getPaymentPercentage(selectedOrderDetails.total, selectedOrderDetails.saldoPendiente)">
+                                [style.width.%]="getPaymentPercentage(selectedOrderDetails.total ?? 0, selectedOrderDetails.saldoPendiente ?? 0)">
                             </div>
                         </div>
                     </div>

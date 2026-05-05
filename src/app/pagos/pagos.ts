@@ -20,6 +20,7 @@ import { SuccessDialogComponent, SuccessDialogResult } from '../shared/component
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog';
 import { STATUS_MAP } from '../shared/constants/ui-constants';
 import { ListHelper } from '../shared/utils/list-helper';
+import { BaseTableComponent } from '../shared/components/base-table.component';
 
 /** Shape normalizada para la tabla — compatible con el HTML existente */
 interface PaymentRow {
@@ -60,7 +61,7 @@ export type PaymentType = 'EFECTIVO' | 'TRANSFERENCIA';
   templateUrl: './pagos.html',
   styleUrls: ['./pagos.css']
 })
-export class PagosComponent implements OnInit, AfterViewInit {
+export class PagosComponent extends BaseTableComponent<PaymentListItemDTO> implements OnInit, AfterViewInit {
 
   // ─── Estado principal ─────────────────────────────────────────────────────
   paymentsData: PaymentRow[] = [];
@@ -68,9 +69,6 @@ export class PagosComponent implements OnInit, AfterViewInit {
 
   dataSource = new MatTableDataSource<PaymentListItemDTO>([]);
   displayedColumns: string[] = ['idPago', 'cliente', 'estado', 'fecha', 'metodo', 'monto', 'acciones'];
-
-  @ViewChild(MatPaginator) paginator?: MatPaginator;
-  @ViewChild(MatSort) sort?: MatSort;
 
   searchTerm = '';
   currentFilter: 'ALL' | PaymentStatus = 'ALL';
@@ -115,6 +113,7 @@ export class PagosComponent implements OnInit, AfterViewInit {
   private readonly dialog = inject(MatDialog);
 
   constructor() {
+    super();
     this.breakpointObserver.observe([Breakpoints.Handset, Breakpoints.TabletPortrait]).subscribe(result => {
       this.isMobile = result.matches;
       this.cdr.markForCheck();
@@ -136,9 +135,6 @@ export class PagosComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator || null;
-    this.dataSource.sort = this.sort || null;
-
     this.dataSource.filterPredicate = (data, filter) => {
       const dataStr = `${data.idPago} ${data.nombreCliente} ${data.estadoPedido} ${data.fechaPago} ${data.metodoPago}`.toLowerCase();
       const matchSearch = dataStr.includes(this.searchTerm.trim().toLowerCase());
@@ -326,7 +322,7 @@ export class PagosComponent implements OnInit, AfterViewInit {
   closeForm(): void {
     this.viewMode = 'list';
     this.selectedPayment = null;
-    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
+    this.cdr.detectChanges();
   }
 
   getMaxAmount(): number {
@@ -384,7 +380,6 @@ export class PagosComponent implements OnInit, AfterViewInit {
         dialogRef.afterClosed().subscribe((result: SuccessDialogResult) => {
           if (!result || result.action === 'primary' || result.action === 'close') {
             this.viewMode = 'list';
-            ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
           } else if (result.action === 'secondary' && !isEdit) {
             this.openAddForm();
           }
