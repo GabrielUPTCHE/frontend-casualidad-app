@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { PaginatedResponse, PaymentListItemDTO } from '../models/payment.dto';
 
@@ -136,5 +136,18 @@ export class PaymentService {
       .set('size', size.toString());
 
     return this.http.get<PaginatedResponse<PaymentListItemDTO>>(this.paymentUrl, { params });
+  }
+
+  getUnifiedSaldos(): Observable<any[]> {
+    return this.http.get<any>(`${this.reportesUrl}/saldos-pendientes`).pipe(
+      map(res => (res.pedidos || []).map((p: any) => ({
+        id: p.idPedido,
+        code: p.codigoPedido || String(p.idPedido),
+        client: p.nombreCliente,
+        date: p.fechaEntrega,
+        total: p.montoTotal,
+        pending: p.saldoPendiente
+      })))
+    );
   }
 }

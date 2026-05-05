@@ -64,6 +64,7 @@ export class ReportesComponent implements OnInit, AfterViewInit {
   fetchIngresos() {
     this.paymentService.getReporteIngresos(this.incomeReport.dateFrom, this.incomeReport.dateTo)
       .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res: any) => {
           this.incomeReport.totalIncome = res.totalGeneral || 0;
@@ -76,26 +77,24 @@ export class ReportesComponent implements OnInit, AfterViewInit {
   }
 
   fetchSaldos() {
-    this.paymentService.getSaldosPendientes()
+    this.paymentService.getUnifiedSaldos()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res: any) => {
-          const pedidos = res.pedidos || [];
-          const saldos: PendingBalanceDTO[] = pedidos.map((p: any) => {
-             const deliveryDate = new Date(p.fechaEntrega);
+        next: (res: any[]) => {
+          this.dataSource.data = res.map(p => {
+             const deliveryDate = new Date(p.date);
              const diffTime = deliveryDate.getTime() - Date.now();
              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
              return {
-               orderId: String(p.idPedido),
-               orderCode: p.codigoPedido || String(p.idPedido),
-               clientName: p.nombreCliente,
-               deliveryDate: p.fechaEntrega,
-               totalAmount: p.montoTotal,
-               pendingBalance: p.saldoPendiente,
+               orderId: String(p.id),
+               orderCode: p.code,
+               clientName: p.client,
+               deliveryDate: p.date,
+               totalAmount: p.total,
+               pendingBalance: p.pending,
                daysUntilDelivery: diffDays
              };
           });
-          this.dataSource.data = saldos;
           this.cdr.detectChanges();
         },
         error: (err: any) => console.error('Error fetching saldos:', err)
@@ -103,7 +102,9 @@ export class ReportesComponent implements OnInit, AfterViewInit {
   }
 
   exportExcel() {
-    this.paymentService.exportarSaldosPendientes().subscribe({
+    this.paymentService.exportarSaldosPendientes()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (blob: Blob) => {
         const url = globalThis.URL.createObjectURL(blob);
         const a = document.createElement('a');

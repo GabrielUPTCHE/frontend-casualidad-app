@@ -159,7 +159,9 @@ export class PagosComponent implements OnInit, AfterViewInit {
   }
 
   fetchPayments(): void {
-    this.paymentService.getPayments(0, 1000).subscribe({
+    this.paymentService.getPayments(0, 1000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (response: any) => {
         this.paymentsListed = response.data;
         this.dataSource.data = this.paymentsListed;
@@ -175,20 +177,19 @@ export class PagosComponent implements OnInit, AfterViewInit {
   // ─── Carga ────────────────────────────────────────────────────────────────
 
   loadPayments(): void {
-    this.paymentService.getSaldosPendientes()
+    this.paymentService.getUnifiedSaldos()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (res: any) => {
-          const pedidos: any[] = res.pedidos ?? [];
-          this.paymentsData = pedidos.map(s => ({
-            idPedido: s.idPedido,
-            id: String(s.idPedido),
-            orderId: s.codigoPedido ?? String(s.idPedido),
-            clientName: s.nombreCliente ?? 'Desconocido',
-            amount: Number(s.saldoPendiente) || 0,
+        next: (res: any[]) => {
+          this.paymentsData = res.map(s => ({
+            idPedido: s.id,
+            id: String(s.id),
+            orderId: s.code,
+            clientName: s.client ?? 'Desconocido',
+            amount: Number(s.pending) || 0,
             type: 'EFECTIVO' as PaymentType,
             status: 'PENDIENTE' as PaymentStatus,
-            createdAt: s.fechaEntrega ?? new Date().toISOString(),
+            createdAt: s.date ?? new Date().toISOString(),
             voucherUrl: null,
             registeredBy: { id: '', name: 'N/A' },
             exceptionalAuth: false
@@ -251,7 +252,9 @@ export class PagosComponent implements OnInit, AfterViewInit {
 
   confirmDelete(): void {
     if (!this.selectedPayment) { return; }
-    this.paymentService.eliminarAbono(this.selectedPayment.idPedido, this.selectedPayment.idPago).subscribe({
+    this.paymentService.eliminarAbono(this.selectedPayment.idPedido, this.selectedPayment.idPago)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: () => {
         console.warn('Para eliminar un abono específico, usa la vista de detalle del pedido.');
         this.closeDeleteModal();
@@ -259,7 +262,6 @@ export class PagosComponent implements OnInit, AfterViewInit {
         this.loadPayments();
         this.fetchPayments();
         this.cdr.detectChanges();
-
       },
       error: (err) => {
         console.error('Error eliminando pago', err);
@@ -269,10 +271,6 @@ export class PagosComponent implements OnInit, AfterViewInit {
         this.cdr.detectChanges();
       }
     });
-    // El backend requiere idPedido + idPago. Como aquí solo tenemos el saldo
-    // (no un pago individual), llamamos a getSaldosPendientes para refrescar.
-    // Si se quiere eliminar un abono específico usar openDeleteAbonoModal(saldo, abono).
-
   }
 
   closeSuccessModal(): void {

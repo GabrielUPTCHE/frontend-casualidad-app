@@ -24,12 +24,12 @@ export class PerfilComponent implements OnInit {
 
   perfilForm: FormGroup = this.fb.group({
     nombre: ['', [
-      Validators.required, 
+      Validators.required,
       Validators.maxLength(50),
       Validators.pattern(String.raw`^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$`)
     ]],
     apellidos: ['', [
-      Validators.required, 
+      Validators.required,
       Validators.maxLength(50),
       Validators.pattern(String.raw`^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$`)
     ]],
@@ -48,7 +48,7 @@ export class PerfilComponent implements OnInit {
       const names = user.nombre ? user.nombre.split(' ') : ['', ''];
       const first = names[0] || '';
       const last = names.slice(1).join(' ') || '';
-      
+
       this.perfilForm.patchValue({
         nombre: first,
         apellidos: last,
@@ -72,12 +72,12 @@ export class PerfilComponent implements OnInit {
     this.successMessage = '';
 
     const payload = this.perfilForm.value;
-    
+
     this.perfilService.actualizarPerfil(payload).subscribe({
       next: (response) => {
         this.successMessage = 'Datos de perfil actualizados exitosamente.';
         this.isLoading = false;
-        
+
         // We might want to update local session storage too if needed.
         const user = this.authService.getUser();
         if (user) {

@@ -73,7 +73,7 @@ export class RestablecerCorreoComponent {
       this.errorMessage = '';
       const codigoActual = this.step2Form.value.codigo;
       const nuevoCorreo = this.step3Form.value.nuevoCorreo;
-      
+
       this.perfilService.validarActualYSolicitarNuevo({ codigoActual, nuevoCorreo }).subscribe({
         next: () => {
           this.nuevoCorreoState = nuevoCorreo;

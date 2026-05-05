@@ -31,4 +31,11 @@ export class ListHelper {
       cdr.detectChanges();
     }, 0);
   }
+
+  static handleSearch(dataSource: any, term: string) {
+    dataSource.filter = term.trim().toLowerCase();
+    if (dataSource.paginator) {
+      dataSource.paginator.firstPage();
+    }
+  }
 }

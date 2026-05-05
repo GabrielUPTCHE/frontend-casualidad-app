@@ -187,16 +187,15 @@ export class InventarioComponent implements OnInit, AfterViewInit {
     this._applyTableFilter();
   }
 
-  onSearchChange(): void {
-    this._applyTableFilter();
-  }
-
   private _applyTableFilter(): void {
-    // Trigger filterPredicate by setting filter string (use a timestamp to force re-evaluation)
     this.dataSource.filter = this.searchTerm.trim().toLowerCase() + '|' + this.currentFilter + '|' + this.selectedCategory;
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
     }
+  }
+
+  onSearchChange(): void {
+    this._applyTableFilter();
   }
 
   get totalInventoryValue(): number {

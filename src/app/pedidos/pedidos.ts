@@ -219,10 +219,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   }
 
   onSearchChange(): void {
-    this.dataSource.filter = this.searchTerm.trim().toLowerCase();
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
+    ListHelper.handleSearch(this.dataSource, this.searchTerm);
   }
 
   // --- ACTIVAR PRODUCCIÓN ---

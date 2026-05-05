@@ -36,8 +36,16 @@ export class HomeComponent implements AfterViewInit {
   private readonly orderService = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
 
-  get dashboardCards() {
-    return [
+  dashboardCards: any[] = [];
+
+  constructor() {
+    Chart.register(...registerables);
+    this.initDashboardCards();
+    this.loadData();
+  }
+
+  private initDashboardCards(): void {
+    this.dashboardCards = [
       {
         title: 'Ingresos de este Mes',
         value: this.totalProfit,
@@ -78,9 +86,11 @@ export class HomeComponent implements AfterViewInit {
     ];
   }
 
-  constructor() {
-    Chart.register(...registerables);
-    this.loadData();
+  private updateDashboardCards(): void {
+    this.dashboardCards[0].value = this.totalProfit;
+    this.dashboardCards[1].value = this.dashboardData.pendingOrders;
+    this.dashboardCards[2].value = this.dashboardData.ordersWithDebt;
+    this.dashboardCards[3].value = this.dashboardData.lowStockCount;
   }
 
   private loadData(): void {
@@ -88,6 +98,7 @@ export class HomeComponent implements AfterViewInit {
     this.paymentService.getSaldosPendientes().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.dashboardData.ordersWithDebt = res.cantidadPedidosPendientes || 0;
+        this.updateDashboardCards();
       }
     });
 
@@ -95,6 +106,7 @@ export class HomeComponent implements AfterViewInit {
     this.inventoryService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (products) => {
         this.dashboardData.lowStockCount = products.filter(p => p.isLowStock).length;
+        this.updateDashboardCards();
       }
     });
 
@@ -102,17 +114,17 @@ export class HomeComponent implements AfterViewInit {
     this.orderService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (orders) => {
         this.dashboardData.pendingOrders = orders.filter(o => o.status === 'PENDIENTE').length;
+        this.updateDashboardCards();
       }
     });
 
-    // 4. Fetch Income Data for Chart (Current Month)
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = now.toISOString().split('T')[0];
-    
+    // 4. Fetch Profit Data (Chart)
+    const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date().toISOString().split('T')[0];
     this.paymentService.getReporteIngresos(firstDay, lastDay).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
-        // We only have one month's data from this call, so we'll put it in the last month index
+        this.totalProfit = res.totalGeneral || 0;
+        this.updateDashboardCards();
         const monthIndex = 5; // June in our default labels
         this.dashboardData.profitVsExpense.profit[monthIndex] = res.totalGeneral || 0;
         this.dashboardData.profitVsExpense.expense[monthIndex] = (res.totalGeneral || 0) * 0.4; // Mock expense as 40%
