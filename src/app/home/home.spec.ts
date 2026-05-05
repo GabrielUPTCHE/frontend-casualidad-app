@@ -1,18 +1,48 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home';
 import { jest } from '@jest/globals';
+import { of } from 'rxjs';
+import { PaymentService } from '../core/services/payment.service';
+import { InventoryService } from '../core/services/inventory.service';
+import { OrderService } from '../core/services/order.service';
+import { RouterModule } from '@angular/router';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
 
+  const mockPaymentService = {
+    getSaldosPendientes: jest.fn().mockReturnValue(of({ cantidadPedidosPendientes: 5, pedidos: [] })),
+    getReporteIngresos: jest.fn().mockReturnValue(of({ totalGeneral: 1000, totalEfectivo: 600, totalTransferencia: 400 }))
+  };
+
+  const mockInventoryService = {
+    getAll: jest.fn().mockReturnValue(of([
+      { id: '1', isLowStock: true },
+      { id: '2', isLowStock: false }
+    ]))
+  };
+
+  const mockOrderService = {
+    getAll: jest.fn().mockReturnValue(of([
+      { id: '1', status: 'PENDIENTE' },
+      { id: '2', status: 'TERMINADO' }
+    ]))
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HomeComponent],
+      imports: [HomeComponent, RouterModule.forRoot([])],
+      providers: [
+        { provide: PaymentService, useValue: mockPaymentService },
+        { provide: InventoryService, useValue: mockInventoryService },
+        { provide: OrderService, useValue: mockOrderService }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

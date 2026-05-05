@@ -20,6 +20,8 @@ import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog';
 import { SuccessDialogComponent } from '../shared/components/success-dialog/success-dialog';
+import { STATUS_MAP } from '../shared/constants/ui-constants';
+import { ListHelper } from '../shared/utils/list-helper';
 @Component({
   selector: 'app-pedidos',
   standalone: true,
@@ -63,20 +65,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   activarProduccionResult: { codigoUnico: string; estado: string } | null = null;
 
   // Mapa de estado para UI — incluye valores del backend (EstadoPedido) y aliases legacy
-  statusMap: Record<string, { text: string, css: string }> = {
-    // Valores reales del backend (EstadoPedido enum)
-    'PENDIENTE': { text: 'Pendiente de Abono', css: 'bg-orange-100 text-orange-700' },
-    'EN_PRODUCCION': { text: 'En Producción', css: 'bg-blue-100 text-blue-700' },
-    'TERMINADO': { text: 'Terminado', css: 'bg-green-100 text-green-700' },
-    'CANCELADO': { text: 'Cancelado', css: 'bg-red-100 text-red-700' },
-    // Aliases legacy del frontend
-    'PENDING_ACCEPTANCE': { text: 'Pendiente de Aceptación', css: 'bg-orange-100 text-orange-700' },
-    'PENDING_PAYMENT': { text: 'Pendiente de Pago', css: 'bg-orange-100 text-orange-700' },
-    'IN_PRODUCTION': { text: 'En Producción', css: 'bg-blue-100 text-blue-700' },
-    'DONE': { text: 'Terminado', css: 'bg-green-100 text-green-700' },
-    'DELIVERED': { text: 'Entregado', css: 'bg-green-100 text-green-700' },
-    'CANCELLED': { text: 'Cancelado', css: 'bg-red-100 text-red-700' }
-  };
+  statusMap = STATUS_MAP;
 
   // Forms state
   viewMode: 'list' | 'add' | 'edit' | 'detail' | 'formalize' = 'list';
@@ -475,11 +464,7 @@ export class PedidosComponent implements OnInit, AfterViewInit {
   closeForm(): void {
     this.viewMode = 'list';
     this.selectedOrderDetails = null;
-    setTimeout(() => {
-      this.dataSource.paginator = this.paginator || null;
-      this.dataSource.sort = this.sort || null;
-      this.cdr.detectChanges();
-    }, 0);
+    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
   }
 
   saveOrder(): void {

@@ -23,4 +23,12 @@ export class ListHelper {
       return 0;
     });
   }
+
+  static setupTable(dataSource: any, paginator: any, sort: any, cdr: any) {
+    setTimeout(() => {
+      dataSource.paginator = paginator || null;
+      dataSource.sort = sort || null;
+      cdr.detectChanges();
+    }, 0);
+  }
 }

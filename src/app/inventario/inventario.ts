@@ -19,6 +19,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SuccessDialogComponent } from '../shared/components/success-dialog/success-dialog';
 import { EntradaDialogComponent } from './components/entrada-dialog/entrada-dialog';
 import { AjusteDialogComponent } from './components/ajuste-dialog/ajuste-dialog';
+import { ListHelper } from '../shared/utils/list-helper';
 
 @Component({
   selector: 'app-inventario',
@@ -347,11 +348,7 @@ export class InventarioComponent implements OnInit, AfterViewInit {
 
   closeForm(): void {
     this.viewMode = 'list';
-    setTimeout(() => {
-      this.dataSource.paginator = this.paginator || null;
-      this.dataSource.sort = this.sort || null;
-      this.cdr.detectChanges();
-    }, 0);
+    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
   }
 
   saveProduct(): void {
@@ -383,12 +380,8 @@ export class InventarioComponent implements OnInit, AfterViewInit {
       dialogRef.afterClosed().subscribe(result => {
         if (!result || result.action === 'primary' || result.action === 'close') {
           this.viewMode = 'list';
-          setTimeout(() => {
-            this.dataSource.paginator = this.paginator || null;
-            this.dataSource.sort = this.sort || null;
-            this.cdr.detectChanges();
-          }, 0);
-        } else if (result.action === 'secondary') {
+          ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
+        } else if (result.action === 'secondary' && !isEdit) {
           this.openAddForm();
         }
         this.cdr.detectChanges();

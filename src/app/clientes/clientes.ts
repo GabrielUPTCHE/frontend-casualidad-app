@@ -19,6 +19,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SuccessDialogComponent } from '../shared/components/success-dialog/success-dialog';
 import { ClientProductsDialogComponent } from './components/client-products-dialog/client-products-dialog';
+import { ListHelper } from '../shared/utils/list-helper';
 @Component({
   selector: 'app-clientes',
   standalone: true,
@@ -231,11 +232,7 @@ export class ClientesComponent implements OnInit, AfterViewInit {
 
   closeForm(): void {
     this.viewMode = 'list';
-    setTimeout(() => {
-      this.dataSource.paginator = this.paginator || null;
-      this.dataSource.sort = this.sort || null;
-      this.cdr.detectChanges();
-    }, 0);
+    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
   }
 
   saveClient(): void {
@@ -270,11 +267,7 @@ export class ClientesComponent implements OnInit, AfterViewInit {
 
             if (!result || result.action === 'primary' || result.action === 'close') {
               this.viewMode = 'list';
-              setTimeout(() => {
-                this.dataSource.paginator = this.paginator || null;
-                this.dataSource.sort = this.sort || null;
-                this.cdr.detectChanges();
-              }, 0);
+              ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
             } else if (result.action === 'secondary' && !isEdit) {
               this.openAddForm();
             }

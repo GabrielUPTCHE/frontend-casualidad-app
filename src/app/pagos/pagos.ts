@@ -15,6 +15,8 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { Router } from '@angular/router';
+import { STATUS_MAP } from '../shared/constants/ui-constants';
+import { ListHelper } from '../shared/utils/list-helper';
 
 /** Shape normalizada para la tabla — compatible con el HTML existente */
 interface PaymentRow {
@@ -70,12 +72,7 @@ export class PagosComponent implements OnInit, AfterViewInit {
   currentFilter: 'ALL' | PaymentStatus = 'ALL';
 
   // ─── Mapas de UI ──────────────────────────────────────────────────────────
-  statusMap: Record<string, { text: string; css: string }> = {
-    'TERMINADO': { text: 'Completado', css: 'bg-green-100 text-green-700' },
-    'EN_PRODUCCION': { text: 'En Producción', css: 'bg-blue-100 text-blue-700' },
-    'PENDIENTE': { text: 'Pendiente', css: 'bg-orange-100 text-orange-700' },
-    'CANCELADO': { text: 'Cancelado', css: 'bg-red-100 text-red-700' }
-  };
+  statusMap = STATUS_MAP;
 
   typeMap: Record<string, { text: string; icon: string }> = {
     'EFECTIVO': { text: 'Efectivo', icon: 'payments' },
@@ -320,11 +317,7 @@ export class PagosComponent implements OnInit, AfterViewInit {
   closeForm(): void {
     this.viewMode = 'list';
     this.selectedPayment = null;
-    setTimeout(() => {
-      this.dataSource.paginator = this.paginator || null;
-      this.dataSource.sort = this.sort || null;
-      this.cdr.detectChanges();
-    }, 0);
+    ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
   }
 
   getMaxAmount(): number {
@@ -378,11 +371,7 @@ export class PagosComponent implements OnInit, AfterViewInit {
     this.showFormSuccessModal = false;
     if (goToList) {
       this.viewMode = 'list';
-      setTimeout(() => {
-        this.dataSource.paginator = this.paginator || null;
-        this.dataSource.sort = this.sort || null;
-        this.cdr.detectChanges();
-      }, 0);
+      ListHelper.setupTable(this.dataSource, this.paginator, this.sort, this.cdr);
     } else if (this.viewMode === 'add') {
       this.openAddForm();
     }

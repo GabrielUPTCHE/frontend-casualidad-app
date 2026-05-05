@@ -36,32 +36,31 @@ export class OrderService {
 
     return this.http.get<any>(this.apiUrl, { params }).pipe(
       map(res => {
-        // El backend devuelve PageResponse<PedidoResumenDto> DIRECTAMENTE (sin wrapper ApiResponse)
-        // PageResponse tiene: { pageNumber, pageSize, totalElements, totalPages, data: [] }
         const items: any[] = res?.data ?? res?.content ?? [];
-        return items.map((p: any) => ({
-          // Campos originales del backend (PedidoResumenDto)
-          idPedido:       p.idPedido,
-          codigoUnico:    p.codigoUnico,
-          nombreCliente:  p.nombreCliente,   // PedidoResumenDto usa nombreCliente (string plano)
-          estadoPedido:   p.estadoPedido,
-          fechaEntrega:   p.fechaEntrega,
-          total:          p.total,
-          saldoPendiente: p.saldoPendiente,
-          // Aliases para compatibilidad con templates existentes
-          id:             p.idPedido ? String(p.idPedido) : `tmp-${crypto.getRandomValues(new Uint32Array(1))[0] % 1000000}`,
-          code:           p.codigoUnico,
-          status:         p.estadoPedido,
-          clientName:     p.nombreCliente ?? '',
-          totalAmount:    p.total,
-          pendingBalance: p.saldoPendiente,
-          deliveryDate:   p.fechaEntrega,
-          paymentStatus:  Number(p.saldoPendiente) === 0 ? 'PAID' : 'PARTIAL',
-          // Objeto cliente como alias para templates que usan order.cliente?.nombreCompleto
-          cliente: { nombreCompleto: p.nombreCliente ?? '', idCliente: null, telefono: '' }
-        }));
+        return items.map(p => this.mapOrderSummary(p));
       })
     );
+  }
+
+  private mapOrderSummary(p: any) {
+    return {
+      idPedido:       p.idPedido,
+      codigoUnico:    p.codigoUnico,
+      nombreCliente:  p.nombreCliente,
+      estadoPedido:   p.estadoPedido,
+      fechaEntrega:   p.fechaEntrega,
+      total:          p.total,
+      saldoPendiente: p.saldoPendiente,
+      id:             p.idPedido ? String(p.idPedido) : `tmp-${crypto.getRandomValues(new Uint32Array(1))[0] % 1000000}`,
+      code:           p.codigoUnico,
+      status:         p.estadoPedido,
+      clientName:     p.nombreCliente ?? '',
+      totalAmount:    p.total,
+      pendingBalance: p.saldoPendiente,
+      deliveryDate:   p.fechaEntrega,
+      paymentStatus:  Number(p.saldoPendiente) === 0 ? 'PAID' : 'PARTIAL',
+      cliente: { nombreCompleto: p.nombreCliente ?? '', idCliente: null, telefono: '' }
+    };
   }
 
   /**
@@ -89,11 +88,7 @@ export class OrderService {
       idCliente:    Number(data.clientId   || data.idCliente  || 1),
       idUsuario:    Number(data.idUsuario  || 1),
       fechaEntrega: data.deliveryDate || data.fechaEntrega || new Date().toISOString().split('T')[0],
-      detalles: (data.items || []).map((item: any) => ({
-        idProducto:    Number(item.productId || item.idProducto || 1),
-        cantidad:      Number(item.quantity  || item.cantidad   || 1),
-        observaciones: item.customization || item.observaciones || ''
-      }))
+      detalles: (data.items || []).map((item: any) => this.mapOrderItem(item))
     };
     return this.http.post<any>(this.apiUrl, payload);
   }
@@ -115,12 +110,10 @@ export class OrderService {
    */
   update(id: string | number, data: any): Observable<any> {
     const payload: any = {
-      detalles: (data.items || data.detalles || []).map((item: any) => ({
-        idDetalle:     item.idDetalle  ?? null,
-        idProducto:    Number(item.productId  || item.idProducto  || 1),
-        cantidad:      Number(item.quantity   || item.cantidad    || 1),
-        observaciones: item.customization || item.observaciones || ''
-      }))
+      detalles: (data.items || data.detalles || []).map((item: any) => {
+        const mapped = this.mapOrderItem(item);
+        return { ...mapped, idDetalle: item.idDetalle ?? null };
+      })
     };
     if (data.deliveryDate || data.fechaEntrega) {
       payload.fechaEntrega = data.deliveryDate || data.fechaEntrega;
@@ -144,5 +137,13 @@ export class OrderService {
    */
   delete(id: string | number): Observable<void> {
     return this.cancelar(id).pipe(map(() => undefined));
+  }
+
+  private mapOrderItem(item: any) {
+    return {
+      idProducto:    Number(item.productId || item.idProducto || 1),
+      cantidad:      Number(item.quantity  || item.cantidad   || 1),
+      observaciones: item.customization || item.observaciones || ''
+    };
   }
 }
