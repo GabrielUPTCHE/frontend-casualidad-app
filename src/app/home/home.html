@@ -2,47 +2,29 @@
     <!-- Top Row -->
     <!-- Top Row: Highlights -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Card: Ingresos del Mes -->
-        <div class="bg-white rounded-2xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-stone-100">
-            <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Ingresos de este Mes</p>
-            <p class="text-3xl font-black text-orange-600 tracking-tight">{{ totalProfit | currency:'USD' }}</p>
-            <div class="mt-4 flex items-center gap-2">
-                <span class="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
-                    <span class="material-symbols-outlined text-[14px]">trending_up</span> 14.5%
-                </span>
-                <span class="text-[10px] text-stone-400 font-medium">vs mes pasado</span>
-            </div>
-        </div>
-
-        <!-- Card: Pedidos por Entregar -->
-        <a routerLink="/pedidos" class="bg-white rounded-2xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-stone-100 group transition-all hover:border-orange-200">
-            <div class="flex justify-between items-start mb-4">
-                <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Por Entregar</p>
-                <span class="material-symbols-outlined text-blue-500 group-hover:scale-110 transition-transform">pending_actions</span>
-            </div>
-            <p class="text-3xl font-black text-stone-900 tracking-tight">{{ dashboardData.pendingOrders }}</p>
-            <p class="text-[11px] text-stone-400 font-medium mt-2">Pedidos en estado pendiente</p>
-        </a>
-
-        <!-- Card: Pedidos con Deuda -->
-        <a routerLink="/pedidos" class="bg-white rounded-2xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-stone-100 group transition-all hover:border-orange-200">
-            <div class="flex justify-between items-start mb-4">
-                <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Con Deuda</p>
-                <span class="material-symbols-outlined text-orange-500 group-hover:scale-110 transition-transform">money_off</span>
-            </div>
-            <p class="text-3xl font-black text-stone-900 tracking-tight">{{ dashboardData.ordersWithDebt }}</p>
-            <p class="text-[11px] text-stone-400 font-medium mt-2">Requieren gestión de cobro</p>
-        </a>
-
-        <!-- Card: Stock Bajo -->
-        <a routerLink="/inventario" class="bg-white rounded-2xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-stone-100 group transition-all hover:border-orange-200">
-            <div class="flex justify-between items-start mb-4">
-                <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Stock Crítico</p>
-                <span class="material-symbols-outlined text-red-500 group-hover:scale-110 transition-transform">inventory_2</span>
-            </div>
-            <p class="text-3xl font-black text-stone-900 tracking-tight">{{ dashboardData.lowStockCount }}</p>
-            <p class="text-[11px] text-stone-400 font-medium mt-2">Insumos bajo el mínimo</p>
-        </a>
+        @for (card of dashboardCards; track card.title) {
+            @if (card.link) {
+                <a [routerLink]="card.link" class="bg-white rounded-2xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-stone-100 group transition-all hover:border-orange-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">{{ card.title }}</p>
+                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform" [ngClass]="card.iconClass">{{ card.icon }}</span>
+                    </div>
+                    <p class="text-3xl font-black text-stone-900 tracking-tight">{{ card.value }}</p>
+                    <p class="text-[11px] text-stone-400 font-medium mt-2">{{ card.footer }}</p>
+                </a>
+            } @else {
+                <div class="bg-white rounded-2xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] border border-stone-100">
+                    <p class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">{{ card.title }}</p>
+                    <p class="text-3xl font-black text-orange-600 tracking-tight">{{ card.value | currency:'USD' }}</p>
+                    <div class="mt-4 flex items-center gap-2">
+                        <span class="text-[11px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center">
+                            <span class="material-symbols-outlined text-[14px]">{{ card.icon }}</span> {{ card.trend }}
+                        </span>
+                        <span class="text-[10px] text-stone-400 font-medium">{{ card.trendText }}</span>
+                    </div>
+                </div>
+            }
+        }
     </section>
 
     <!-- Lower Row -->

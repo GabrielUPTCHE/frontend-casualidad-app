@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ElementRef, ViewChild, PLATFORM_ID, inject } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild, PLATFORM_ID, inject, DestroyRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
@@ -7,8 +7,6 @@ import { PaymentService } from '../core/services/payment.service';
 import { InventoryService } from '../core/services/inventory.service';
 import { OrderService } from '../core/services/order.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DestroyRef } from '@angular/core';
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -37,6 +35,48 @@ export class HomeComponent implements AfterViewInit {
   private readonly inventoryService = inject(InventoryService);
   private readonly orderService = inject(OrderService);
   private readonly destroyRef = inject(DestroyRef);
+
+  get dashboardCards() {
+    return [
+      {
+        title: 'Ingresos de este Mes',
+        value: this.totalProfit,
+        isCurrency: true,
+        icon: 'trending_up',
+        iconClass: 'text-orange-600',
+        trend: '14.5%',
+        trendText: 'vs mes pasado',
+        link: null
+      },
+      {
+        title: 'Por Entregar',
+        value: this.dashboardData.pendingOrders,
+        isCurrency: false,
+        icon: 'pending_actions',
+        iconClass: 'text-blue-500',
+        link: '/pedidos',
+        footer: 'Pedidos en estado pendiente'
+      },
+      {
+        title: 'Con Deuda',
+        value: this.dashboardData.ordersWithDebt,
+        isCurrency: false,
+        icon: 'money_off',
+        iconClass: 'text-orange-500',
+        link: '/pedidos',
+        footer: 'Requieren gestión de cobro'
+      },
+      {
+        title: 'Stock Crítico',
+        value: this.dashboardData.lowStockCount,
+        isCurrency: false,
+        icon: 'inventory_2',
+        iconClass: 'text-red-500',
+        link: '/inventario',
+        footer: 'Insumos bajo el mínimo'
+      }
+    ];
+  }
 
   constructor() {
     Chart.register(...registerables);

@@ -153,7 +153,7 @@ export class PagosComponent implements OnInit, AfterViewInit {
         case 'fecha': return item.fechaPago ? new Date(item.fechaPago).getTime() : 0;
         case 'metodo': return item.metodoPago || '';
         case 'monto': return item.monto || 0;
-        default: return (item as any)[property] ?? '';
+        default: return (item as any)[property] || '';
       }
     };
   }
