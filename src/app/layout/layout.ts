@@ -31,7 +31,7 @@ import { InventoryService } from '../core/services/inventory.service';
   templateUrl: './layout.html',
   styleUrls: ['./layout.css'],
 })
-export class LayoutComponent {
+export class LayoutComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
   showProfileDropdown = false;

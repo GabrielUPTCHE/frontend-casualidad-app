@@ -51,14 +51,10 @@ export class InventoryService {
       stock: Number(item.cantidadDisponible ?? item.stock ?? 0),
       isLowStock: item.stockBajo ?? item.isLowStock ?? false,
       unit: { name: item.unidadMedida || (item.unit?.name) || 'Unidad' },
-      purchasePrice: (item.precioCompra !== undefined && item.precioCompra !== null) ? item.precioCompra : 
-                     (item.purchasePrice !== undefined && item.purchasePrice !== null) ? item.purchasePrice : 0,
-      salePrice: (item.precioVenta !== undefined && item.precioVenta !== null) ? item.precioVenta : 
-                 (item.salePrice !== undefined && item.salePrice !== null) ? item.salePrice : 0,
-      productionCost: (item.precioCompra !== undefined && item.precioCompra !== null) ? item.precioCompra : 
-                      (item.productionCost !== undefined && item.productionCost !== null) ? item.productionCost : 0,
-      wastePercent: (item.porcentajeSobrante !== undefined && item.porcentajeSobrante !== null) ? item.porcentajeSobrante : 
-                    (item.wastePercent !== undefined && item.wastePercent !== null) ? item.wastePercent : 0,
+      purchasePrice: item.precioCompra ?? item.purchasePrice ?? 0,
+      salePrice: item.precioVenta ?? item.salePrice ?? 0,
+      productionCost: item.precioCompra ?? item.productionCost ?? 0,
+      wastePercent: item.porcentajeSobrante ?? item.wastePercent ?? 0,
       minStock: Number(item.stockMinimo ?? item.minStock ?? 0),
       composition: item.composition || null
     };

@@ -610,4 +610,67 @@ describe('InventarioComponent', () => {
     const product = makeProduct();
     expect(accessor(product, 'nonexistent')).toBe('');
   });
+  it('should trigger pending add stock modal if id is present', () => {
+    (component as any).pendingAddStockProductId = '1';
+    const product = makeProduct({ id: '1' });
+    const spy = jest.spyOn(component, 'openEntradaModal').mockImplementation(() => { });
+    
+    component.productsData = [product];
+    (component as any).checkPendingAddStockProduct();
+    
+    expect(spy).toHaveBeenCalledWith(product);
+    expect((component as any).pendingAddStockProductId).toBeNull();
+  });
+
+  it('should handle error when registrarEntrada fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    const result = { idProducto: '1', cantidad: 5, motivo: 'CONSUMO' };
+    mockDialog.open.mockReturnValue(dialogRefStub(result));
+    (mockInventoryService.registrarEntrada as jest.Mock).mockReturnValue(
+      throwError(() => new Error('Entrada failed'))
+    );
+    component.openEntradaModal(makeProduct());
+    expect(consoleSpy).toHaveBeenCalledWith('Error registrando entrada', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it('should handle error when ajustarInventario fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    const result = { idProducto: '1', cantidadNueva: 20, motivo: 'AJUSTE' };
+    mockDialog.open.mockReturnValue(dialogRefStub(result));
+    (mockInventoryService.ajustarInventario as jest.Mock).mockReturnValue(
+      throwError(() => new Error('Ajuste failed'))
+    );
+    component.openAjusteModal(makeProduct());
+    expect(consoleSpy).toHaveBeenCalledWith('Error ajustando inventario', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it('should load composition in edit form if present', () => {
+    const product = makeProduct({
+      composition: [{ idInsumo: 10, cantidadUsada: 2 }]
+    });
+    component.openEditForm(product as any);
+    expect(component.componentsFormArray.length).toBe(1);
+    expect(component.componentsFormArray.at(0).get('idInsumo')?.value).toBe(10);
+  });
+
+  it('should handle error when delete fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    (mockInventoryService.delete as jest.Mock).mockReturnValue(
+      throwError(() => new Error('Delete failed'))
+    );
+    const product = makeProduct();
+    component.confirmDelete(product);
+    expect(mockUIService.showError).toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it('should mark all as touched if form is invalid on save', () => {
+    const spy = jest.spyOn(component.inventoryForm, 'markAllAsTouched');
+    component.viewMode = 'add';
+    component.inventoryForm.patchValue({ name: '' }); // Invalid
+    component.saveProduct();
+    expect(spy).toHaveBeenCalled();
+  });
 });
