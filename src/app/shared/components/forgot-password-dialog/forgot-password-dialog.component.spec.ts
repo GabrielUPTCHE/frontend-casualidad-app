@@ -116,4 +116,17 @@ describe('ForgotPasswordDialogComponent', () => {
     component.close();
     expect(mockDialogRef.close).toHaveBeenCalled();
   });
+
+  it('should return form controls via getters', () => {
+    expect(component.correoControl).toBeTruthy();
+    expect(component.codigoControl).toBeTruthy();
+    expect(component.nuevaPasswordControl).toBeTruthy();
+    expect(component.confirmarPasswordControl).toBeTruthy();
+  });
+
+  it('should mark emailForm as touched if invalid on solicitarRecuperacion', () => {
+    component.emailForm.controls['correo'].setValue(''); // Invalid
+    component.solicitarRecuperacion();
+    expect(component.emailForm.controls['correo'].touched).toBe(true);
+  });
 });

@@ -56,11 +56,11 @@ describe('PedidosComponent', () => {
   const setupTestBed = async (queryParams: any = {}) => {
     mockOrderService = {
       getAll: jest.fn(() => of([makeOrder()])),
-      create: jest.fn(() => of({})),
-      update: jest.fn(() => of({})),
-      cancelar: jest.fn(() => of({})),
+      create: jest.fn(() => of(makeOrderDetail())),
+      update: jest.fn(() => of({ estado: 'success', mensaje: 'Pedido actualizado' })),
+      cancelar: jest.fn(() => of({ estado: 'success', mensaje: 'Pedido cancelado' })),
       getById: jest.fn(() => of(makeOrderDetail())),
-      activarProduccion: jest.fn(() => of({ codigoUnico: 'COD-123' })),
+      activarProduccion: jest.fn(() => of({ codigoUnico: 'COD-123', mensaje: 'En producción', estado: 'success' })),
       setOrderDraft: jest.fn(),
       getOrderDraft: jest.fn(() => null),
       clearOrderDraft: jest.fn(),
@@ -69,7 +69,7 @@ describe('PedidosComponent', () => {
       getAll: jest.fn(() => of([{ id: 10, name: 'Alpha', idCliente: 10, nombre: 'Alpha' }])),
     };
     mockInventoryService = {
-      getAll: jest.fn(() => of([{ id: 1, name: 'P1', idProducto: 1, nombre: 'P1', salePrice: 100 }])),
+      getAll: jest.fn(() => of([{ idProducto: 1, nombre: 'P1', tipo: 'ELABORADO', precioVenta: 100 }])),
     };
     mockDialog = { open: jest.fn(() => dialogRefStub(true)) };
     mockUIService = {
@@ -148,7 +148,7 @@ describe('PedidosComponent', () => {
   it('should map clients from loadClients', () => {
     (mockClientService.getAll as jest.Mock).mockReturnValue(
       of([
-        { id: 5, name: 'Beta', idCliente: 5, nombre: 'Beta' }, 
+        { id: 5, name: 'Beta', idCliente: 5, nombre: 'Beta' },
         { id: 6, name: 'Gamma', idCliente: 6, nombre: 'Gamma' }
       ])
     );
@@ -170,10 +170,10 @@ describe('PedidosComponent', () => {
 
   it('should map products from loadProducts', () => {
     (mockInventoryService.getAll as jest.Mock).mockReturnValue(
-      of([{ id: 99, name: 'Torta', idProducto: 99, nombre: 'Torta' }])
+      of([{ idProducto: 99, nombre: 'Torta', tipo: 'ELABORADO' }])
     );
     component.loadProducts();
-    expect(component.productsList[0].id).toBe(99);
+    expect(component.productsList[0].idProducto).toBe(99);
     expect(component.productsList[0].nombre).toBe('Torta');
   });
 
@@ -196,8 +196,8 @@ describe('PedidosComponent', () => {
   it('should reset paginator on search change', () => {
     const firstPageSpy = jest.fn();
     component.dataSource.sort = null;
-    component.dataSource.paginator = { 
-      firstPage: firstPageSpy, 
+    component.dataSource.paginator = {
+      firstPage: firstPageSpy,
       page: of(),
       initialized: of()
     } as any;
@@ -399,15 +399,15 @@ describe('PedidosComponent', () => {
 
   it('ngOnInit should restore draft if exists and new=true', async () => {
     const draft = { specifications: 'Restored Draft', items: [] };
-    
+
     // Setup test bed with query params
     TestBed.resetTestingModule();
     await setupTestBed({ new: 'true' });
-    
+
     // Manually set mock return and trigger logic
     (mockOrderService.getOrderDraft as jest.Mock).mockReturnValue(draft);
     component.ngOnInit(); // Trigger again with the mock active
-    
+
     expect(component.viewMode).toBe('add');
     expect(component.orderForm.get('specifications')?.value).toBe('Restored Draft');
     expect(mockOrderService.clearOrderDraft).toHaveBeenCalled();
@@ -416,12 +416,12 @@ describe('PedidosComponent', () => {
   it('populateOrderForm should reset form before patching', async () => {
     // Fill form with some "stale" data
     component.orderForm.patchValue({ id: 999, status: 'STALE' });
-    
+
     (mockOrderService.getById as jest.Mock).mockReturnValue(of(makeOrderDetail({ idPedido: 1 })));
     component.openEditForm(makeOrder({ idPedido: 1, estadoPedido: 'PENDIENTE' }));
-    
+
     await new Promise(r => setTimeout(r, 20));
-    
+
     expect(component.orderForm.get('id')?.value).toBe(1);
     expect(component.orderForm.get('status')?.value).not.toBe('STALE');
   });
@@ -600,10 +600,10 @@ describe('PedidosComponent', () => {
       makeOrder({ estadoPedido: 'TERMINADO' })
     ];
     component.dataSource.data = component.ordersData;
-    
+
     component.setFormalizeFilter('PENDIENTES');
     expect(component.formalizeList.every(o => o.estadoPedido === 'PENDIENTE')).toBe(true);
-    
+
     component.setFormalizeFilter('PRODUCCION');
     expect(component.formalizeList.length).toBe(0);
   });

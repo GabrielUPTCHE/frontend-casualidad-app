@@ -1,9 +1,10 @@
 import { Component, inject, OnInit, AfterViewInit, ChangeDetectorRef, DestroyRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderSummaryDTO, OrderDetailDTO, CreateOrderDTO } from '../core/models/order.dto';
+import { ProductDTO } from '../core/models/inventory.dto';
 import { OrderService } from '../core/services/order.service';
 import { ClientService } from '../core/services/client.service';
 import { InventoryService } from '../core/services/inventory.service';
@@ -17,8 +18,6 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ConfirmDialogComponent } from '../shared/components/confirm-dialog/confirm-dialog';
-import { SuccessDialogComponent } from '../shared/components/success-dialog/success-dialog';
 import { STATUS_MAP } from '../shared/constants/ui-constants';
 import { ListHelper } from '../shared/utils/list-helper';
 import { BaseTableComponent } from '../shared/components/base-table.component';
@@ -58,7 +57,7 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
 
   // Listas cargadas del backend
   clientsList: { id: number; nombre: string }[] = [];
-  productsList: { id: number; nombre: string }[] = [];
+  productsList: ProductDTO[] = [];
 
   selectedOrder: OrderSummaryDTO | null = null;
 
@@ -129,13 +128,38 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
   }
 
   addItem(): void {
-    this.itemsFormArray.push(this.fb.group({
+    const group = this.fb.group({
       idDetalle: [null],
       productId: [null, Validators.required],
       quantity: [1, [Validators.required, Validators.min(1)]],
       observaciones: [''],
       unitPrice: null
-    }));
+    }, { validators: [this.duplicateProductValidator.bind(this), this.stockAvailabilityValidator.bind(this)] });
+
+    this.itemsFormArray.push(group);
+  }
+
+  private duplicateProductValidator(group: AbstractControl): ValidationErrors | null {
+    const productId = group.get('productId')?.value;
+    if (!productId) return null;
+    const controls = this.itemsFormArray.controls;
+    const index = controls.indexOf(group);
+    const isDuplicate = controls.some((ctrl, i) =>
+      i !== index && String(ctrl.get('productId')?.value) === String(productId)
+    );
+    return isDuplicate ? { duplicateProduct: true } : null;
+  }
+
+  private stockAvailabilityValidator(group: AbstractControl): ValidationErrors | null {
+    const productId = group.get('productId')?.value;
+    const quantity = group.get('quantity')?.value;
+    if (!productId || !quantity) return null;
+
+    const product = this.productsList.find(p => String(p.idProducto) === String(productId));
+    if (product && quantity > product.cantidadDisponible) {
+      return { exceedStock: true };
+    }
+    return null;
   }
 
   removeItem(index: number): void {
@@ -217,11 +241,32 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
   loadProducts(): void {
     this.inventoryService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
-        this.productsList = data;
+        // Filtrar para mostrar solo ELABORADO, REVENTA y TRANSFORMADO
+        this.productsList = data.filter(p =>
+          p.tipo === 'ELABORADO' || p.tipo === 'REVENTA' || p.tipo === 'TRANSFORMADO'
+        );
         this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Error loading products', err)
     });
+  }
+
+  onProductChange(index: number): void {
+    const itemGroup = this.itemsFormArray.at(index);
+    const productId = itemGroup.get('productId')?.value;
+
+    if (productId) {
+      this.inventoryService.getById(productId).subscribe({
+        next: (product) => {
+          // El precio unitario del producto es su precio de venta
+          itemGroup.patchValue({
+            unitPrice: product.precioVenta
+          });
+          this.cdr.detectChanges();
+        },
+        error: (err) => console.error('Error fetching product price', err)
+      });
+    }
   }
 
   onSearchChange(): void {
@@ -313,14 +358,14 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
   private restoreDraft(draft: CreateOrderDTO | any): void {
     this.orderForm.reset();
     this.itemsFormArray.clear();
-    
+
     // Restore items
     if (draft.items && draft.items.length > 0) {
       draft.items.forEach(() => this.addItem());
     } else {
       this.addItem();
     }
-    
+
     this.orderForm.patchValue(draft);
     this.orderService.clearOrderDraft();
     this.viewMode = 'add';
@@ -336,10 +381,10 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
   openEditForm(order: OrderSummaryDTO): void {
     const id = order.idPedido ?? order.id;
     const status = order.estadoPedido || order.status;
-    
+
     // Validar si el pedido se puede editar
-    if (status === 'TERMINADO' || status === 'DONE' || status === 'DELIVERED' || 
-        status === 'CANCELADO' || status === 'CANCELLED') {
+    if (status === 'TERMINADO' || status === 'DONE' || status === 'DELIVERED' ||
+      status === 'CANCELADO' || status === 'CANCELLED') {
       this.uiService.showSuccess({
         title: 'Acción No Permitida',
         message: `No es posible editar un pedido que se encuentra en estado `,
@@ -402,7 +447,7 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
 
     this.formalizeList = list;
     this.formalizeDataSource.data = list;
-    
+
     // Usar setTimeout para esperar a que el paginator se renderice si acabamos de cambiar el viewMode
     setTimeout(() => {
       if (this.formalizePaginator) {
@@ -418,7 +463,7 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
     }, 0);
 
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     this.ordenesCriticas = pendientes.filter(order => {
       if (!order.fechaEntrega) return false;
       const deliveryDate = new Date(order.fechaEntrega);
@@ -485,7 +530,7 @@ export class PedidosComponent extends BaseTableComponent<OrderSummaryDTO> implem
       const matchingProduct = this.productsList.find(prod => prod.nombre === p.nombreProducto);
       this.itemsFormArray.push(this.fb.group({
         idDetalle: [p.idDetalle],
-        productId: [matchingProduct ? matchingProduct.id : null, Validators.required],
+        productId: [matchingProduct ? matchingProduct.idProducto : null, Validators.required],
         quantity: [p.cantidad, [Validators.required, Validators.min(1)]],
         observaciones: [p.observaciones || ''],
         unitPrice: [p.precioUnitario || 0]

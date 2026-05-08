@@ -354,11 +354,11 @@
                 <div
                     class="px-8 py-6 bg-surface-container-low flex flex-col sm:flex-row-reverse gap-4 -mx-8 -mb-8 mt-8 border-t border-outline-variant/15">
                     <button type="submit" [disabled]="!paymentForm.valid || hasAmountError()"
-                        class="flex-1 bg-gradient-to-br from-[#974300] to-[#fd8e4a] text-white py-4 rounded-xl font-bold tracking-wide shadow-lg shadow-orange-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50">
+                        class="flex-1 bg-gradient-to-r from-[#c25e23] to-[#f28b4b] text-white py-4 rounded-xl font-bold tracking-wide shadow-lg shadow-orange-900/20 active:scale-95 transition-all disabled:opacity-50">
                         {{ viewMode === 'add' ? 'Registrar Movimiento' : 'Guardar Cambios' }}
                     </button>
                     <button type="button" (click)="closeForm()"
-                        class="flex-1 bg-white text-on-surface-variant border border-outline-variant/30 py-4 rounded-xl font-bold tracking-wide hover:bg-neutral-100 transition-all">
+                        class="flex-1 px-8 py-3.5 rounded-xl text-stone-500 font-bold hover:bg-stone-50 transition-all">
                         Cancelar
                     </button>
                 </div>

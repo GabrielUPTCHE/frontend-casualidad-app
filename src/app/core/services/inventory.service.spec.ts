@@ -32,10 +32,10 @@ describe('InventoryService', () => {
     service.getAll().subscribe(r => result = r);
     const req = httpMock.expectOne(r => r.url.includes('/productos'));
     req.flush({ data: { data: [mockProduct] } });
-    expect(result[0].name).toBe('Tela');
-    expect(result[0].stock).toBe(50);
+    expect(result[0].nombre).toBe('Tela');
+    expect(result[0].cantidadDisponible).toBe(50);
     expect(result[0].isLowStock).toBe(false);
-    expect(result[0].unit.name).toBe('Metro');
+    expect(result[0].unidadMedida).toBe('Metro');
   });
 
   it('should getAll using content fallback', () => {
@@ -143,7 +143,7 @@ describe('InventoryService', () => {
     expect(result[0].tipo).toBe('TRANSFORMADO');
     expect(result[0].unidadMedida).toBe('Litro');
     expect(result[0].cantidadDisponible).toBe(10);
-    expect(result[0].stockBajo).toBe(true);
+    expect(result[0].isLowStock).toBe(true);
   });
 
   it('should map inventory item with minimum data and nulls', () => {
@@ -170,9 +170,9 @@ describe('InventoryService', () => {
     expect(result[0].tipo).toBe('INSUMO');
     expect(result[0].unidadMedida).toBe('Unidad');
     expect(result[0].cantidadDisponible).toBe(0);
-    expect(result[0].stockBajo).toBe(false);
-    expect(result[0].purchasePrice).toBe(0);
-    expect(result[0].salePrice).toBe(0);
+    expect(result[0].isLowStock).toBe(false);
+    expect(result[0].precioCompra).toBe(0);
+    expect(result[0].precioVenta).toBe(0);
   });
 
   it('should getUnidadesMedida', () => {

@@ -416,16 +416,25 @@
                                         <mat-form-field appearance="outline" subscriptSizing="dynamic"
                                             class="w-full min-w-[200px]">
                                             <mat-select formControlName="productId"
-                                                placeholder="Seleccionar producto...">
-                                                @for (prod of productsList; track (prod.id || $index)) {
-                                                <mat-option [value]="prod.id">{{ prod.nombre }}</mat-option>
+                                                placeholder="Seleccionar producto..."
+                                                (selectionChange)="onProductChange(i)">
+                                                @for (prod of productsList; track (prod.idProducto || $index)) {
+                                                <mat-option [value]="prod.idProducto">{{ prod.nombre }}</mat-option>
                                                 }
                                             </mat-select>
+                                            @if (item.hasError('duplicateProduct')) {
+                                                <p class="text-[10px] text-error font-black mt-1">Ya está en la lista</p>
+                                            }
                                         </mat-form-field>
                                     </td>
                                     <td class="p-4">
-                                        <input type="number" formControlName="quantity" step="1" min="1"
-                                            class="w-full text-center bg-transparent border-none focus:ring-0 p-0 text-sm" />
+                                        <div class="space-y-1">
+                                            <input type="number" formControlName="quantity" step="1" min="1"
+                                                class="w-full text-center bg-transparent border-none focus:ring-0 p-0 text-sm font-bold" />
+                                            @if (item.hasError('exceedStock')) {
+                                                <p class="text-[10px] text-error font-black text-center">¡Sin Stock!</p>
+                                            }
+                                        </div>
                                     </td>
                                     <td class="p-4">
                                         <div class="flex items-center gap-1">
@@ -483,11 +492,13 @@
                 <!-- Actions -->
                 <div class="flex items-center gap-4 pt-6">
                     <button (click)="closeForm()"
-                        class="w-full py-4 rounded-xl text-stone-600 font-bold bg-stone-100 hover:bg-stone-200 transition-colors"
+                        class="w-full py-4 rounded-xl text-stone-500 font-bold hover:bg-stone-50 transition-all"
                         type="button">Cancelar</button>
                     <button [disabled]="!orderForm.valid"
-                        class="w-full py-4 rounded-xl bg-gradient-to-br from-[#c25e23] to-[#f28b4b] text-white font-bold shadow-lg disabled:opacity-50"
-                        type="submit">{{ viewMode === 'add' ? 'Crear Pedido' : 'Guardar Cambios' }}</button>
+                        class="w-full py-4 rounded-xl bg-gradient-to-r from-[#c25e23] to-[#f28b4b] text-white font-bold shadow-lg shadow-orange-900/20 active:scale-95 transition-all disabled:opacity-50"
+                        type="submit">
+                        {{ viewMode === 'add' ? 'Crear Pedido' : 'Guardar Cambios' }}
+                    </button>
                 </div>
             </form>
         </div>
